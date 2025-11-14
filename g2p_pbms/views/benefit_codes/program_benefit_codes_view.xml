@@ -15,7 +15,7 @@
             <form string="Program Benefit Codes">
                 <sheet>
                     <group>
-                        <field name="benefit_code_id" options="{'create': False, 'create_edit': False, 'no_quick_create': True}" readonly="context.get('benefit_code_form_edit')"/>
+                        <field name="benefit_code_id" options="{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}" readonly="context.get('benefit_code_form_edit')"/>
                         <field name="max_quantity" readonly="context.get('benefit_code_form_edit')"/>
                         <field name="measurement_unit" readonly="1"/>
                     </group>

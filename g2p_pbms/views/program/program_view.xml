@@ -40,7 +40,7 @@
           <notebook>
             <!-- Benefit Codes Page (Invisible) -->
             <page string="Benefit Codes" invisible="1">
-              <field name="benefit_code_ids" nolabel="1" options="{'no_quick_create': True}"/>
+              <field name="benefit_code_ids" nolabel="1" />
             </page>
             <!-- Program Benefit Codes Page -->
             <page string="Program Benefit Codes">

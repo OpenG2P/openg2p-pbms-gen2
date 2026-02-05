@@ -20,10 +20,25 @@ class G2PAdministrativeAreaLarge(models.Model):
         )
     ]
 
-    def action_open_edit(self):
+    def action_open_view(self):
+        self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "res_model": "g2p.administrative.area.large",
-            "view_mode": "form",
+            "name": "View Administrative Area (Large) Details",
+            "res_model": self._name,
             "res_id": self.id,
+            "view_mode": "form",
+            "target": "new",
+            "flags": {"mode": "readonly"},
+        }
+
+    def action_open_edit(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'g2p.administrative.area.large',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {'create': False, 'area_form_edit': True},
         }

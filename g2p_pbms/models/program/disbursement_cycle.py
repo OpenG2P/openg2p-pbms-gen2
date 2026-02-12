@@ -142,6 +142,15 @@ class G2PDisbursementCycle(models.Model):
                 vals['disbursement_schedule_date'] = calculated_date
         return super(G2PDisbursementCycle, self).create(vals)
     
+    def action_refresh_data(self):
+        """Force refresh of data from database"""
+        self.ensure_one()
+        # Clear cache to force fresh database reads
+        self._invalidate_cache()
+        # Re-read from database
+        self.invalidate_recordset()
+        return True
+
     def action_open_view(self):
         return {
             "type": "ir.actions.act_window",

@@ -89,12 +89,10 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     show_approve_enrolment_button = fields.Boolean(
         string="Show Approve Enrolment Button",
         compute="_compute_show_approve_enrolment_button",
-        store=True
     )
     show_approve_disbursement_button = fields.Boolean(
         string="Show Approve Disbursement Button",
         compute="_compute_show_approve_disbursement_button",
-        store=True
     )
 
     @api.depends('program_id', 'verification_ids')
@@ -570,6 +568,15 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             raise AccessError(_("You are not allowed to perform this action."))
         
         self.approve_for_disbursement()
+
+    def action_refresh_data(self):
+        """Force refresh of data from database"""
+        self.ensure_one()
+        # Clear cache to force fresh database reads
+        self._invalidate_cache()
+        # Re-read from database
+        self.invalidate_recordset()
+        return True
 
     def action_record_verifications(self):
         allowed_group = 'g2p_pbms.group_beneficiary_list_verifier'

@@ -142,7 +142,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
 
     def _build_sql_query(self, odoo_domain, target_registry):
         sql_query=""
-        order_by_field="id"
+        order_by_field="internal_record_id"
         try:
             domain_value = safe_eval(odoo_domain or "[]")
         except Exception as e:
@@ -238,7 +238,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 "page": page,
                 "page_size": page_size,
                 "search_query": sql_query or "",
-                "order_by": order_by_condition or "id asc",
+                "order_by": order_by_condition or "internal_record_id asc",
             }
         }
 

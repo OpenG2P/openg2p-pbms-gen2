@@ -10,6 +10,15 @@ from odoo.addons.g2p_registry_type_addon.models import (
     G2PTargetModelMapping,
     G2PRegistryType,
 )
+from openg2p_fastapi_common.schemas import G2PRequestHeader
+from openg2p_g2p_bridge_models.schemas import (
+    DisbursementEnvelopeStatusRequest,
+    DisbursementEnvelopeStatusRequestBody,
+    DisbursementEnvelopeStatusResponse,
+    DisbursementBatchControlRequest,
+    DisbursementBatchControlRequestBody,
+    DisbursementBatchControlResponse,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -405,6 +414,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                     "beneficiary_list_id": wizard.beneficiary_list_uuid
                 }
             }
+            
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -659,21 +669,34 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
             if not api_url:
                 _logger.error("Bridge API URL not set in environment")
             endpoint = f"{api_url}/get_disbursement_envelope_status"
-            payload = {
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "get_disbursement_envelope_status",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": self.disbursement_envelope_id,
-            }
+            # payload = {
+            #     "header": {
+            #         "version": "1.0.0",
+            #         "message_id": "string",
+            #         "message_ts": "string",
+            #         "action": "get_disbursement_envelope_status",
+            #         "sender_id": sender_id,
+            #         "sender_uri": "",
+            #         "receiver_id": "",
+            #         "total_count": 0,
+            #         "is_msg_encrypted": False,
+            #         "meta": "string"
+            #     },
+            #     "message": self.disbursement_envelope_id,
+            # }
+            payload = DisbursementEnvelopeStatusRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                    instance_id="string"
+                ),
+                request_body=DisbursementEnvelopeStatusRequestBody(
+                    request_payload=self.disbursement_envelope_id
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -684,79 +707,87 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
             try:
                 response = requests.post(endpoint, json=payload, timeout=10, headers=headers)
                 response.raise_for_status()
-                resp_data = response.json()
-                _logger.debug("Disbursement ENvelope Status Response: %s", resp_data)
-
+                _logger.debug("Disbursement Envelope Status Response: %s", response.json())
+                disbursement_envelope_status_response = DisbursementEnvelopeStatusResponse.model_validate(
+                    response.json()
+                )
             except Exception as e:
                 _logger.error("API call failed: %s", e)
-                return
+                raise UserError("Failed to fetch disbursement envelope status: %s" % e) from e
 
-            message = resp_data.get("message", {})
+            message = (
+                disbursement_envelope_status_response.response_body.response_payload
+                if disbursement_envelope_status_response.response_body
+                else None
+            )
+
+            if not message:
+                raise UserError("No disbursement envelope status returned.")
 
             summary_vals = {
                 "wizard_id": self.wizard_id.id if self.wizard_id else False,
-                "disbursement_envelope_id": message.get("disbursement_envelope_id"),
+                "disbursement_envelope_id": message.disbursement_envelope_id,
                 "benefit_code_id": self.benefit_code_id,
-                "benefit_code_mnemonic": message.get("benefit_code_mnemonic"),
-                "benefit_type": message.get("benefit_type"),
-                "measurement_unit": message.get("measurement_unit"),
-                "number_of_beneficiaries_received": message.get("number_of_beneficiaries_received"),
-                "number_of_beneficiaries_declared": message.get("number_of_beneficiaries_declared"),
-                "number_of_disbursements_declared": message.get("number_of_disbursements_declared"),
-                "number_of_disbursements_received": message.get("number_of_disbursements_received"),
+                "benefit_code_mnemonic": message.benefit_code_mnemonic,
+                "benefit_type": message.benefit_type,
+                "measurement_unit": message.measurement_unit,
+                "number_of_beneficiaries_received": message.number_of_beneficiaries_received,
+                "number_of_beneficiaries_declared": message.number_of_beneficiaries_declared,
+                "number_of_disbursements_declared": message.number_of_disbursements_declared,
+                "number_of_disbursements_received": message.number_of_disbursements_received,
                 "total_disbursement_quantity_declared": (
-                    "{:,}".format(int(message.get("total_disbursement_quantity_declared", 0)))
-                    + (" " + str(message.get("measurement_unit", "")) if message.get("measurement_unit") else "")
-                    if message.get("total_disbursement_quantity_declared") is not None else ""
+                    "{:,}".format(int(message.total_disbursement_quantity_declared))
+                    + (" " + str(message.measurement_unit) if message.measurement_unit else "")
+                    if message.total_disbursement_quantity_declared is not None else ""
                 ),
                 "total_disbursement_quantity_received": (
-                    "{:,}".format(int(message.get("total_disbursement_quantity_received", 0)))
-                    + (" " + str(message.get("measurement_unit", "")) if message.get("measurement_unit") else "")
-                    if message.get("total_disbursement_quantity_received") is not None else ""
+                    "{:,}".format(int(message.total_disbursement_quantity_received))
+                    + (" " + str(message.measurement_unit) if message.measurement_unit else "")
+                    if message.total_disbursement_quantity_received is not None else ""
                 ),
-                "funds_available_with_bank": message.get("funds_available_with_bank"),
-                "funds_available_latest_timestamp": self.odoo_datetime_format(message.get("funds_available_latest_timestamp")),
-                "funds_available_latest_error_code": message.get("funds_available_latest_error_code"),
-                "funds_available_attempts": message.get("funds_available_attempts"),
-                "funds_blocked_with_bank": message.get("funds_blocked_with_bank"),
-                "funds_blocked_latest_timestamp": self.odoo_datetime_format(message.get("funds_blocked_latest_timestamp")),
-                "funds_blocked_latest_error_code": message.get("funds_blocked_latest_error_code"),
-                "funds_blocked_attempts": message.get("funds_blocked_attempts"),
-                "funds_blocked_reference_number": message.get("funds_blocked_reference_number"),
-                "number_of_disbursements_shipped": message.get("number_of_disbursements_shipped"),
-                "number_of_disbursements_reconciled": message.get("number_of_disbursements_reconciled"),
-                "number_of_disbursements_reversed": message.get("number_of_disbursements_reversed"),
-                "no_of_warehouses_allocated": message.get("no_of_warehouses_allocated"),
-                "no_of_warehouses_notified": message.get("no_of_warehouses_notified"),
-                "no_of_agencies_allocated": message.get("no_of_agencies_allocated"),
-                "no_of_agencies_notified": message.get("no_of_agencies_notified"),
-                "no_of_beneficiaries_notified": message.get("no_of_beneficiaries_notified"),
-                "no_of_pods_received": message.get("no_of_pods_received"),
+                "funds_available_with_bank": message.funds_available_with_bank.value if message.funds_available_with_bank else None,
+                "funds_available_latest_timestamp": self.odoo_datetime_format(message.funds_available_latest_timestamp) if message.funds_available_latest_timestamp else None,
+                "funds_available_latest_error_code": message.funds_available_latest_error_code,
+                "funds_available_attempts": message.funds_available_attempts,
+                "funds_blocked_with_bank": message.funds_blocked_with_bank.value if message.funds_blocked_with_bank else None,
+                "funds_blocked_latest_timestamp": self.odoo_datetime_format(message.funds_blocked_latest_timestamp) if message.funds_blocked_latest_timestamp else None,
+                "funds_blocked_latest_error_code": message.funds_blocked_latest_error_code,
+                "funds_blocked_attempts": message.funds_blocked_attempts,
+                "funds_blocked_reference_number": message.funds_blocked_reference_number,
+                "number_of_disbursements_shipped": message.number_of_disbursements_shipped,
+                "number_of_disbursements_reconciled": message.number_of_disbursements_reconciled,
+                "number_of_disbursements_reversed": message.number_of_disbursements_reversed,
+                "no_of_warehouses_allocated": message.no_of_warehouses_allocated,
+                "no_of_warehouses_notified": message.no_of_warehouses_notified,
+                "no_of_agencies_allocated": message.no_of_agencies_allocated,
+                "no_of_agencies_notified": message.no_of_agencies_notified,
+                "no_of_beneficiaries_notified": message.no_of_beneficiaries_notified,
+                "no_of_pods_received": message.no_of_pods_received,
             }
 
             geo_lines = []
-            disbursement_batch_control_geos = message.get("disbursement_batch_control_geos", None)
+            disbursement_batch_control_geos = message.disbursement_batch_control_geos
             if disbursement_batch_control_geos:
                 for geo in disbursement_batch_control_geos:
                     geo_lines.append((0, 0, {
-                        "disbursement_batch_control_geo_id": geo.get("disbursement_batch_control_geo_id"),
-                        "disbursement_cycle_id": geo.get("disbursement_cycle_id"),
-                        "disbursement_envelope_id": geo.get("disbursement_envelope_id"),
-                        "disbursement_batch_control_id": geo.get("disbursement_batch_control_id"),
-                        "administrative_zone_id_large": geo.get("administrative_zone_id_large"),
-                        "administrative_zone_mnemonic_large": geo.get("administrative_zone_mnemonic_large"),
-                        "administrative_zone_id_small": geo.get("administrative_zone_id_small"),
-                        "administrative_zone_mnemonic_small": geo.get("administrative_zone_mnemonic_small"),
-                        "no_of_beneficiaries": geo.get("no_of_beneficiaries"),
-                        "total_quantity": geo.get("total_quantity"),
-                        "warehouse_id": geo.get("warehouse_id"),
-                        "warehouse_mnemonic": geo.get("warehouse_mnemonic"),
-                        "warehouse_additional_attributes": geo.get("warehouse_additional_attributes"),
-                        "agency_id": geo.get("agency_id"),
-                        "agency_mnemonic": geo.get("agency_mnemonic"),
-                        "agency_additional_attributes": geo.get("agency_additional_attributes"),
-                        "warehouse_notification_status": geo.get("warehouse_notification_status"),
-                        "agency_notification_status": geo.get("agency_notification_status"),
+                        "disbursement_batch_control_geo_id": geo.disbursement_batch_control_geo_id,
+                        "disbursement_cycle_id": geo.disbursement_cycle_id,
+                        "disbursement_envelope_id": geo.disbursement_envelope_id,
+                        "disbursement_batch_control_id": geo.disbursement_batch_control_id,
+                        "administrative_zone_id_large": geo.administrative_zone_id_large,
+                        "administrative_zone_mnemonic_large": geo.administrative_zone_mnemonic_large,
+                        "administrative_zone_id_small": geo.administrative_zone_id_small,
+                        "administrative_zone_mnemonic_small": geo.administrative_zone_mnemonic_small,
+                        "no_of_beneficiaries": geo.no_of_beneficiaries,
+                        "total_quantity": geo.total_quantity,
+                        "warehouse_id": geo.warehouse_id,
+                        "warehouse_mnemonic": geo.warehouse_mnemonic,
+                        "warehouse_additional_attributes": geo.warehouse_additional_attributes,
+                        "agency_id": geo.agency_id,
+                        "agency_mnemonic": geo.agency_mnemonic,
+                        "agency_additional_attributes": geo.agency_additional_attributes,
+                        "warehouse_notification_status": geo.warehouse_notification_status,
+                        "agency_notification_status": geo.agency_notification_status,
                     }))
             if geo_lines:
                 summary_vals["disbursement_envelope_summary_geo_ids"] = geo_lines
@@ -771,14 +802,18 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
         except Exception as e:
             raise UserError("An error occurred: %s" % e) from e
         
-    # Try parsing ISO 8601 with microseconds
-    def odoo_datetime_format(self, dt_str):
+    def odoo_datetime_format(self, dt_value):
+        if not dt_value:
+            return None
+
+        if isinstance(dt_value, datetime):
+            return dt_value.strftime('%Y-%m-%d %H:%M:%S')
+
         try:
-            dt = datetime.fromisoformat(dt_str)
+            dt = datetime.fromisoformat(dt_value)
             return dt.strftime('%Y-%m-%d %H:%M:%S')
-        # Fallback
         except Exception:
-            return dt_str
+            return dt_value
 
 class G2PAPIDisbursementBatchLine(models.TransientModel):
     _name = 'g2p.api.disbursement.batch.line'
@@ -829,21 +864,34 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             if not api_url:
                 _logger.error("Bridge API URL not set in environment")
             endpoint = f"{api_url}/get_disbursement_batch_control"
-            payload = {
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "get_disbursement_batch_control",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": self.batch_id,
-            }
+            # payload = {
+            #     "header": {
+            #         "version": "1.0.0",
+            #         "message_id": "string",
+            #         "message_ts": "string",
+            #         "action": "get_disbursement_batch_control",
+            #         "sender_id": sender_id,
+            #         "sender_uri": "",
+            #         "receiver_id": "",
+            #         "total_count": 0,
+            #         "is_msg_encrypted": False,
+            #         "meta": "string"
+            #     },
+            #     "message": self.batch_id,
+            # }
+            payload = DisbursementBatchControlRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                    instance_id="string"
+                ),
+                request_body=DisbursementBatchControlRequestBody(
+                    request_payload=self.batch_id
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -854,69 +902,78 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             try:
                 response = requests.post(endpoint, json=payload, timeout=10, headers=headers)
                 response.raise_for_status()
-                resp_data = response.json()
-                _logger.info("Disbursement Batch Status Response: %s", resp_data)
+                _logger.debug("Disbursement Batch Status Response: %s", response.json())
+                disbursement_batch_control_response = DisbursementBatchControlResponse.model_validate(
+                    response.json()
+                )
             except Exception as e:
                 _logger.error("API call failed: %s", e)
-                return
+                raise UserError("Failed to fetch disbursement batch status: %s" % e) from e
 
-            message = resp_data.get("message", {})
+            message = (
+                disbursement_batch_control_response.response_body.response_payload
+                if disbursement_batch_control_response.response_body
+                else None
+            )
+
+            if not message:
+                raise UserError("No disbursement batch control status returned.")
 
             summary_vals = {
                 "wizard_id": self.wizard_id.id if self.wizard_id else False,
-                "disbursement_batch_control_id": message.get("disbursement_batch_control_id"),
-                "disbursement_cycle_id": message.get("disbursement_cycle_id"),
-                "disbursement_cycle_code_mnemonic": message.get("disbursement_cycle_code_mnemonic"),
-                "disbursement_envelope_id": message.get("disbursement_envelope_id"),
-                "benefit_code_id": message.get("benefit_code_id"),
-                "benefit_code_mnemonic": message.get("benefit_code_mnemonic"),
-                "benefit_type": message.get("benefit_type"),
-                "measurement_unit": message.get("measurement_unit"),
-                "fa_resolution_status": message.get("fa_resolution_status"),
-                "fa_resolution_timestamp": self.odoo_datetime_format(message.get("fa_resolution_timestamp")),
-                "fa_resolution_latest_error_code": message.get("fa_resolution_latest_error_code"),
-                "fa_resolution_attempts": message.get("fa_resolution_attempts"),
-                "sponsor_bank_dispatch_status": message.get("sponsor_bank_dispatch_status"),
-                "sponsor_bank_dispatch_timestamp": self.odoo_datetime_format(message.get("sponsor_bank_dispatch_timestamp")),
-                "sponsor_bank_dispatch_latest_error_code": message.get("sponsor_bank_dispatch_latest_error_code"),
-                "sponsor_bank_dispatch_attempts": message.get("sponsor_bank_dispatch_attempts"),
-                "geo_resolution_status": message.get("geo_resolution_status"),
-                "geo_resolution_timestamp": self.odoo_datetime_format(message.get("geo_resolution_timestamp")),
-                "geo_resolution_latest_error_code": message.get("geo_resolution_latest_error_code"),
-                "geo_resolution_attempts": message.get("geo_resolution_attempts"),
-                "warehouse_allocation_status": message.get("warehouse_allocation_status"),
-                "warehouse_allocation_timestamp": self.odoo_datetime_format(message.get("warehouse_allocation_timestamp")),
-                "warehouse_allocation_latest_error_code": message.get("warehouse_allocation_latest_error_code"),
-                "warehouse_allocation_attempts": message.get("warehouse_allocation_attempts"),
-                "agency_allocation_status": message.get("agency_allocation_status"),
-                "agency_allocation_timestamp": self.odoo_datetime_format(message.get("agency_allocation_timestamp")),
-                "agency_allocation_latest_error_code": message.get("agency_allocation_latest_error_code"),
-                "agency_allocation_attempts": message.get("agency_allocation_attempts"),
+                "disbursement_batch_control_id": message.disbursement_batch_control_id,
+                "disbursement_cycle_id": message.disbursement_cycle_id,
+                "disbursement_cycle_code_mnemonic": message.disbursement_cycle_code_mnemonic,
+                "disbursement_envelope_id": message.disbursement_envelope_id,
+                "benefit_code_id": message.benefit_code_id,
+                "benefit_code_mnemonic": message.benefit_code_mnemonic,
+                "benefit_type": message.benefit_type,
+                "measurement_unit": message.measurement_unit,
+                "fa_resolution_status": message.fa_resolution_status,
+                "fa_resolution_timestamp": self.odoo_datetime_format(message.fa_resolution_timestamp) if message.fa_resolution_timestamp else None,
+                "fa_resolution_latest_error_code": message.fa_resolution_latest_error_code,
+                "fa_resolution_attempts": message.fa_resolution_attempts,
+                "sponsor_bank_dispatch_status": message.sponsor_bank_dispatch_status,
+                "sponsor_bank_dispatch_timestamp": self.odoo_datetime_format(message.sponsor_bank_dispatch_timestamp) if message.sponsor_bank_dispatch_timestamp else None,
+                "sponsor_bank_dispatch_latest_error_code": message.sponsor_bank_dispatch_latest_error_code,
+                "sponsor_bank_dispatch_attempts": message.sponsor_bank_dispatch_attempts,
+                "geo_resolution_status": message.geo_resolution_status,
+                "geo_resolution_timestamp": self.odoo_datetime_format(message.geo_resolution_timestamp) if message.geo_resolution_timestamp else None,
+                "geo_resolution_latest_error_code": message.geo_resolution_latest_error_code,
+                "geo_resolution_attempts": message.geo_resolution_attempts,
+                "warehouse_allocation_status": message.warehouse_allocation_status,
+                "warehouse_allocation_timestamp": self.odoo_datetime_format(message.warehouse_allocation_timestamp) if message.warehouse_allocation_timestamp else None,
+                "warehouse_allocation_latest_error_code": message.warehouse_allocation_latest_error_code,
+                "warehouse_allocation_attempts": message.warehouse_allocation_attempts,
+                "agency_allocation_status": message.agency_allocation_status,
+                "agency_allocation_timestamp": self.odoo_datetime_format(message.agency_allocation_timestamp) if message.agency_allocation_timestamp else None,
+                "agency_allocation_latest_error_code": message.agency_allocation_latest_error_code,
+                "agency_allocation_attempts": message.agency_allocation_attempts,
             }
 
             geo_lines = []
-            disbursement_batch_control_geos = message.get("disbursement_batch_control_geos", None)
+            disbursement_batch_control_geos = message.disbursement_batch_control_geos
             if disbursement_batch_control_geos:
                 for geo in disbursement_batch_control_geos:
                     geo_lines.append((0, 0, {
-                        "disbursement_batch_control_geo_id": geo.get("disbursement_batch_control_geo_id"),
-                        "disbursement_cycle_id": geo.get("disbursement_cycle_id"),
-                        "disbursement_envelope_id": geo.get("disbursement_envelope_id"),
-                        "disbursement_batch_control_id": geo.get("disbursement_batch_control_id"),
-                        "administrative_zone_id_large": geo.get("administrative_zone_id_large"),
-                        "administrative_zone_mnemonic_large": geo.get("administrative_zone_mnemonic_large"),
-                        "administrative_zone_id_small": geo.get("administrative_zone_id_small"),
-                        "administrative_zone_mnemonic_small": geo.get("administrative_zone_mnemonic_small"),
-                        "no_of_beneficiaries": geo.get("no_of_beneficiaries"),
-                        "total_quantity": geo.get("total_quantity"),
-                        "warehouse_id": geo.get("warehouse_id"),
-                        "warehouse_mnemonic": geo.get("warehouse_mnemonic"),
-                        "warehouse_additional_attributes": geo.get("warehouse_additional_attributes"),
-                        "agency_id": geo.get("agency_id"),
-                        "agency_mnemonic": geo.get("agency_mnemonic"),
-                        "agency_additional_attributes": geo.get("agency_additional_attributes"),
-                        "warehouse_notification_status": geo.get("warehouse_notification_status"),
-                        "agency_notification_status": geo.get("agency_notification_status"),
+                        "disbursement_batch_control_geo_id": geo.disbursement_batch_control_geo_id,
+                        "disbursement_cycle_id": geo.disbursement_cycle_id,
+                        "disbursement_envelope_id": geo.disbursement_envelope_id,
+                        "disbursement_batch_control_id": geo.disbursement_batch_control_id,
+                        "administrative_zone_id_large": geo.administrative_zone_id_large,
+                        "administrative_zone_mnemonic_large": geo.administrative_zone_mnemonic_large,
+                        "administrative_zone_id_small": geo.administrative_zone_id_small,
+                        "administrative_zone_mnemonic_small": geo.administrative_zone_mnemonic_small,
+                        "no_of_beneficiaries": geo.no_of_beneficiaries,
+                        "total_quantity": geo.total_quantity,
+                        "warehouse_id": geo.warehouse_id,
+                        "warehouse_mnemonic": geo.warehouse_mnemonic,
+                        "warehouse_additional_attributes": geo.warehouse_additional_attributes,
+                        "agency_id": geo.agency_id,
+                        "agency_mnemonic": geo.agency_mnemonic,
+                        "agency_additional_attributes": geo.agency_additional_attributes,
+                        "warehouse_notification_status": geo.warehouse_notification_status,
+                        "agency_notification_status": geo.agency_notification_status,
                     }))
             if geo_lines:
                 summary_vals["disbursement_batch_summary_geo_ids"] = geo_lines
@@ -931,10 +988,15 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             raise UserError("An error occurred: %s" % e) from e
 
     # Try parsing ISO 8601 with microseconds
-    def odoo_datetime_format(self, dt_str):
+    def odoo_datetime_format(self, dt_value):
+        if not dt_value:
+            return None
+
+        if isinstance(dt_value, datetime):
+            return dt_value.strftime('%Y-%m-%d %H:%M:%S')
+
         try:
-            dt = datetime.fromisoformat(dt_str)
+            dt = datetime.fromisoformat(dt_value)
             return dt.strftime('%Y-%m-%d %H:%M:%S')
-        # Fallback
         except Exception:
-            return dt_str
+            return dt_value

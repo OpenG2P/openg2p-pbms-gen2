@@ -52,6 +52,15 @@ class G2PEnrollmentCycle(models.Model):
         last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
         return last.cycle_number + 1 if last else 1
 
+    def action_refresh_data(self):
+        """Force refresh of data from database"""
+        self.ensure_one()
+        # Clear cache to force fresh database reads
+        self._invalidate_cache()
+        # Re-read from database
+        self.invalidate_recordset()
+        return True
+
     def action_open_view(self):
         return {
             "type": "ir.actions.act_window",

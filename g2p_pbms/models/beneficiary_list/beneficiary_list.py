@@ -20,6 +20,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Eligibility Process Status",
         default="pending",
@@ -34,6 +35,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Entitlement Process Status",
         default="not_applicable",
@@ -48,6 +50,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Disbursement Envelope Status",
         default="not_applicable",
@@ -62,6 +65,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Disbursement Envelope Status",
         default="not_applicable",

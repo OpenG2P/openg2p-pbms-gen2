@@ -47,7 +47,7 @@
                 </control>
                 <field name="name"/>
                 <field name="agency_mnemonic"/>
-                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit"/>
+                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_agency_editor"/>
             </tree>
         </field>
     </record>

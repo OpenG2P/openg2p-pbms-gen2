@@ -25,10 +25,11 @@ class G2PBenefitCodes(models.Model):
     benefit_description = fields.Text(string="Benefit Description")
     decimal_places = fields.Integer(
         string="Decimal Places",
-        help="Number of decimal places to use for this benefit code's value.",
+        help="Number of decimal places to use for this benefit code's value. Maximum allowed value is 4. This field can only be set during creation, updation can not and should not be done.",
         default=0,
         store=True
     )
+
     measurement_unit = fields.Char(string="Measurement Unit")
 
     _sql_constraints = [
@@ -38,6 +39,26 @@ class G2PBenefitCodes(models.Model):
             "The benefit mnemonic must be unique!",
         )
     ]
+
+    @api.model
+    def create(self, vals):
+        # Clamp decimal_places between 0 and 4
+        if 'decimal_places' in vals:
+            try:
+                dp = int(vals['decimal_places'])
+            except Exception:
+                dp = 0
+            if dp < 0:
+                dp = 0
+            elif dp > 4:
+                dp = 4
+            vals['decimal_places'] = dp
+        return super(G2PBenefitCodes, self).create(vals)
+
+    def write(self, vals):
+        if 'decimal_places' in vals:
+            vals.pop('decimal_places')
+        return super(G2PBenefitCodes, self).write(vals)
 
     def action_open_view(self):
         self.ensure_one()

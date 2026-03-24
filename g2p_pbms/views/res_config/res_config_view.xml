@@ -12,12 +12,12 @@
                     name="g2p_config_settings"
                     logo="/g2p_registry_base/static/description/icon.png">
                     <block title="G2P PBMS Settings">
-                        <setting string="BG Task API URL" help="Background Task REST API URL Endpoint (e.g., https://localhost:8000 - no path allowed)">
-                            <field name="g2p_pbms_bgtask_api_url" />
+                        <setting string="Staff Portal API URL" help="Staff Portal REST API URL Endpoint (e.g., https://localhost:8000 - no path allowed)">
+                            <field name="g2p_pbms_staff_portal_api_url" />
                         </setting>
                     </block>
                     <block title="G2P Bridge Settings">
-                        <setting string="Bridge API URL" help="Bridge API URL Endpoint (e.g., https://localhost:8000 - no path allowed)">
+                        <setting string="Bridge Partner API URL" help="Bridge Partner API URL Endpoint (e.g., https://localhost:8000 - no path allowed)">
                             <field name="g2p_bridge_api_url" />
                         </setting>
                     </block>

@@ -34,7 +34,7 @@
                 <field name="benefit_type"/>
                 <field name="measurement_unit"/>
                 <field name="benefit_description"/>
-                <button name="action_open_edit" type="object" class="fa fa-pencil"/>
+                <button name="action_open_edit" type="object" class="fa fa-pencil" groups="g2p_pbms.group_benefit_code_editor"/>
             </tree>
         </field>
     </record>

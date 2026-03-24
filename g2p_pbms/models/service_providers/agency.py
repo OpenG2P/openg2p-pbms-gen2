@@ -26,6 +26,14 @@ class G2PAgency(models.Model):
         string='Agency Program Benefit Codes'
     )
 
+    _sql_constraints = [
+        (
+            'agency_mnemonic',
+            'unique(agency_mnemonic)',
+            'Agency Mnemonic must be unique!'
+        )
+    ]
+
 
     def action_open_edit(self):
         self.ensure_one()

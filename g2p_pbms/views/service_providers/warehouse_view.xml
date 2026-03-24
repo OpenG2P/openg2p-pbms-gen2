@@ -51,8 +51,21 @@
                 </control>
                 <field name="name" string="Warehouse Name"/>
                 <field name="warehouse_mnemonic" string="Warehouse Mnemonic"/>
-                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit"/>
+                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_warehouse_editor"/>
             </tree>
         </field>
+    </record>
+
+    <record id="action_g2p_warehouse_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_g2p_warehouse_tree"/>
+        <field name="act_window_id" ref="action_g2p_warehouse"/>
+    </record>
+    <record id="action_g2p_warehouse_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_g2p_warehouse_form"/>
+        <field name="act_window_id" ref="action_g2p_warehouse"/>
     </record>
 </odoo>

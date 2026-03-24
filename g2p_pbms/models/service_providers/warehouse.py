@@ -29,6 +29,14 @@ class G2PWarehouse(models.Model):
         string="Warehouse Program Benefit Codes"
     )
 
+    _sql_constraints = [
+        (
+            'warehouse_mnemonic',
+            'unique(warehouse_mnemonic)',
+            'Warehouse Mnemonic must be unique!'
+        )
+    ]
+
     def action_open_edit(self):
         self.ensure_one()
         xmlid = "g2p_pbms.view_g2p_sponsor_bank_form" if self.is_sponsor_bank else "g2p_pbms.view_g2p_warehouse_form"

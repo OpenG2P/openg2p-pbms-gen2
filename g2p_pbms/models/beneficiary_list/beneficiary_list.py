@@ -20,6 +20,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Eligibility Process Status",
         default="pending",
@@ -34,6 +35,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Entitlement Process Status",
         default="not_applicable",
@@ -48,6 +50,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Disbursement Envelope Status",
         default="not_applicable",
@@ -62,6 +65,7 @@ class G2PBeneficiaryList(models.Model):
             ("pending", "pending"),
             ("processing", "processing"),
             ("complete", "complete"),
+            ("failed", "failed")
         ],
         string="Disbursement Envelope Status",
         default="not_applicable",
@@ -84,7 +88,6 @@ class G2PBeneficiaryList(models.Model):
     list_workflow_status = fields.Selection(
         [
             ("initiated", ""),
-            # ("published_to_communities", "PUBLISHED TO COMMUNITIES"),
             ("approved_final_enrolment", "APPROVED FINAL ENROLMENT"),
             ("approved_for_disbursement", "APPROVED FOR DISBURSEMENT"),
         ],
@@ -98,7 +101,8 @@ class G2PBeneficiaryList(models.Model):
     )
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now , readonly=True)
     processed_date = fields.Datetime(string="Processed Date", default=None, readonly=True)
-    
+
+
     @api.depends('enrollment_cycle_id.program_id', 'disbursement_cycle_id.program_id')
     def _compute_program_id(self):
         for record in self:
@@ -110,6 +114,32 @@ class G2PBeneficiaryList(models.Model):
                 record.list_stage = "disbursement"
 
     def action_open_summary_wizard(self):
+        if (
+            self.list_stage == 'enrollment'
+            and self.list_workflow_status != 'approved_final_enrollment'
+            and getattr(self.program_id, 'auto_approve_enrolment', False)
+            and getattr(self.program_id, 'verifications_for_enrolment', 0) == 0
+        ):
+            self.list_workflow_status = 'approved_final_enrolment'
+            self.approval_date = fields.Date.context_today(self)
+            if self.enrollment_cycle_id:
+                self.env['g2p.enrollment.cycle'].browse(self.enrollment_cycle_id.id).write({
+                    'approved_for_enrollment': True,
+                })
+        
+        if (
+            self.list_stage == 'disbursement'
+            and self.list_workflow_status != 'approved_for_disbursement'
+            and getattr(self.program_id, 'auto_approve_disbursement', False)
+            and getattr(self.program_id, 'verifications_for_disbursement', 0) == 0
+        ):
+            self.list_workflow_status = 'approved_for_disbursement'
+            self.approval_date = fields.Date.context_today(self)
+            if self.disbursement_cycle_id:
+                self.env['g2p.disbursement.cycle'].browse(self.disbursement_cycle_id.id).write({
+                    'approved_for_disbursement': True,
+                })
+        
         self.ensure_one()
         wizard_vals = {
             "target_registry": self.program_id.target_registry,

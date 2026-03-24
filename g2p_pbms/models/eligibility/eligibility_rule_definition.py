@@ -100,7 +100,7 @@ class G2PEligibilityRuleDefinition(models.Model):
             where_str = (" WHERE %s" % where_clause) if where_clause else ""
             # Use the target model's table name in the SQL query.
             query_str = (
-                'SELECT "%s".link_registry_id FROM ' % target_model._table + from_clause + where_str
+                'SELECT "%s".internal_record_id FROM ' % target_model._table + from_clause + where_str
             )
 
             # Format the parameters as strings.
@@ -128,4 +128,6 @@ class G2PEligibilityRuleDefinition(models.Model):
             "view_mode": "form",
             "target": "new",
             "flags": {"mode": "readonly"},
+            "views": [[False, "form"]],
+            "context": dict(self._context, default_no_create=True, no_create=True, create=False),
         }

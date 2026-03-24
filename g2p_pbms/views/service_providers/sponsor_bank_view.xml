@@ -33,6 +33,9 @@
                         <page string="Sponsor Bank Program Benefit Code">
                             <field name="warehouse_program_benefit_codes" nolabel="1" options="{'no_quick_create': True}"/>
                         </page>
+                        <page string="Administrative Areas (Large)" invisible="is_sponsor_bank">
+                            <field name="administrative_area_large_ids" nolabel="1" options="{'no_quick_create': True}"/>
+                        </page>
                     </notebook>
                 </sheet>
             </form>
@@ -48,8 +51,21 @@
                 </control>
                 <field name="name" string="Sponsor Bank Name"/>
                 <field name="warehouse_mnemonic" string="Sponsor Bank Mnemonic"/>
-                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit"/>
+                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_warehouse_editor"/>
             </tree>
         </field>
+    </record>
+
+    <record id="action_g2p_sponsor_bank_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_g2p_sponsor_bank_tree"/>
+        <field name="act_window_id" ref="action_g2p_sponsor_bank"/>
+    </record>
+    <record id="action_g2p_sponsor_bank_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_g2p_sponsor_bank_form"/>
+        <field name="act_window_id" ref="action_g2p_sponsor_bank"/>
     </record>
 </odoo>

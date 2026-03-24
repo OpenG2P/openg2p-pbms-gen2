@@ -5,7 +5,10 @@
         <field name="name">g2p.disbursement.cycle.form</field>
         <field name="model">g2p.disbursement.cycle</field>
         <field name="arch" type="xml">
-            <form create="0">
+            <form create="0" delete="0">
+                <header>
+                    <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh" invisible="not id"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="program_id" readonly="1"/>
@@ -18,7 +21,7 @@
                     <!-- Hide fields during creation -->
                     <notebook>
                         <!-- Priority Rules -->
-                        <page string="Priority Rules" invisible="id == False">
+                        <page string="Disbursement Rules" invisible="id == False">
                             <field name="priority_rule_ids" readonly="approved_for_disbursement" nolabel="1" options="{'no_quick_create': True}" context="{'default_target_registry': target_registry}"/>
                         </page>
                         <!-- Disbursement List -->

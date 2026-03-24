@@ -4,19 +4,9 @@
     <field name="name">g2p.bgtask.summary.wizard.form</field>
     <field name="model">g2p.bgtask.summary.wizard</field>
     <field name="arch" type="xml">
-      <form string="Eligibility Summary" create="0">
+      <form string="Eligibility Summary" create="0" delete="0">
         <header>
-          <!-- Publish to Communities -->
-          <!-- <button 
-            type="object"
-            class="btn-primary"
-            icon="fa-files-o"
-            title="Publish to Communities"
-            string="Publish to Communities"
-            name="action_publish_to_communities"
-            invisible="not(list_stage == 'enrollment' and list_workflow_status == 'initiated')"
-            groups="g2p_pbms.group_beneficiary_list_reviewer"
-          /> -->
+          <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh" invisible="not id"/>
           <!-- Community Leader -->
           <button 
             type="object" 
@@ -25,7 +15,7 @@
             string="Add a Verification" 
             name="action_record_verifications" 
             invisible="not(list_stage == 'enrollment' and list_workflow_status == 'initiated')"
-            groups="g2p_pbms.group_beneficiary_list_reviewer"
+            groups="g2p_pbms.group_beneficiary_list_verifier"
           /> 
           <!-- Enrollment Reviewer -->
           <button 
@@ -35,7 +25,7 @@
             name="action_approve_final_enrollment" 
             invisible="not(show_approve_enrolment_button and list_stage == 'enrollment' and list_workflow_status == 'initiated')"
             string="Approve Final Enrollment" 
-            groups="g2p_pbms.group_enrolment_reviewer"
+            groups="g2p_pbms.group_enrolment_approver"
           />
           <!-- Disbursement Reviewer -->
           <button 
@@ -45,7 +35,7 @@
             string="Add a Verification" 
             name="action_record_verifications" 
             invisible="not(list_stage == 'disbursement' and list_workflow_status == 'initiated')"
-            groups="g2p_pbms.group_beneficiary_list_reviewer"
+            groups="g2p_pbms.group_beneficiary_list_verifier"
           /> 
           <button 
             type="object" 
@@ -54,7 +44,7 @@
             name="action_approve_for_disbursement" 
             invisible="not(show_approve_disbursement_button and list_stage == 'disbursement' and list_workflow_status == 'initiated')"
             string="Approve for Disbursement" 
-            groups="g2p_pbms.group_disbursement_reviewer"
+            groups="g2p_pbms.group_disbursement_approver"
           />
         </header>
         <sheet>

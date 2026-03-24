@@ -23,20 +23,24 @@
             </group>
             <group string="Program Configuration">
               <field string="Base Registry" name="target_registry" readonly="not context.get('program_form_create')"/>
-              <field name="service_providers_required" readonly="not context.get('program_form_create')"/> <!-- TODO: Lock this field if benefit_type is cash  -->
-              <field name="verifications_for_enrolment" readonly="not context.get('program_form_edit')"/>
-              <field name="verifications_for_disbursement" readonly="not context.get('program_form_edit')"/>
-            </group>
-            <group string="Cycle Configuration" >
+              <field name="service_providers_required" readonly="not context.get('program_form_create')"/>
               <field name="show_label_for_beneficiary_list" invisible="1"/>
-              <field name="disbursement_frequency" readonly="not context.get('program_form_edit')"/>
-              <field name="enrollment_frequency" readonly="not context.get('program_form_edit')"/>
+            </group>
+            <group string="Enrollment Configuration" >
+              <field string="Frequency" name="enrollment_frequency" readonly="not context.get('program_form_edit')"/>
+              <field string="# of Verifications" name="verifications_for_enrolment" readonly="not context.get('program_form_edit')"/>
+              <field name="auto_approve_enrolment" readonly="not context.get('program_form_edit')"/>
+            </group>
+            <group string="Disbursement Configuration" >
+              <field string="Frequency" name="disbursement_frequency" readonly="not context.get('program_form_edit')"/>
+              <field string="# of Verifications" name="verifications_for_disbursement" readonly="not context.get('program_form_edit')"/>
+              <field name="auto_approve_disbursement" readonly="not context.get('program_form_edit')"/>
             </group>
           </group>
           <notebook>
             <!-- Benefit Codes Page (Invisible) -->
             <page string="Benefit Codes" invisible="1">
-              <field name="benefit_code_ids" nolabel="1" options="{'no_quick_create': True}"/>
+              <field name="benefit_code_ids" nolabel="1" />
             </page>
             <!-- Program Benefit Codes Page -->
             <page string="Program Benefit Codes">
@@ -77,7 +81,7 @@
         <field name="description"/>
         <field name="target_registry"/>
         <field name="program_status"/>
-        <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit"/>
+        <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_program_editor"/>
       </tree>
     </field>
   </record>

@@ -3,22 +3,22 @@
     <menuitem id="menu_g2p_root" name="PBMS" sequence="0"/>
     
     <!-- PBMS Menu Ribbon -->
-    <menuitem id="menu_g2p_benefit_codes" name="Benefit Codes" parent="menu_g2p_root" action="action_g2p_benefit_codes" sequence="1"/>
-    <menuitem id="menu_g2p_geography" name="Administrative Areas" parent="menu_g2p_root" sequence="2" />
-    <menuitem id="menu_g2p_service_providers" name="Service Providers" parent="menu_g2p_root" sequence="3"/>
+    <menuitem id="menu_g2p_benefit_codes" name="Benefit Codes" parent="menu_g2p_root" action="action_g2p_benefit_codes" sequence="1" groups="g2p_pbms.group_benefit_code_editor,g2p_pbms.group_benefit_code_viewer"/>
+    <menuitem id="menu_g2p_geography" name="Administrative Areas" parent="menu_g2p_root" sequence="2" groups="g2p_pbms.group_geography_viewer,g2p_pbms.group_geography_editor"/>
+    <menuitem id="menu_g2p_service_providers" name="Service Providers" parent="menu_g2p_root" sequence="3" groups="g2p_pbms.group_agency_viewer,g2p_pbms.group_agency_editor,g2p_pbms.group_warehouse_editor,g2p_pbms.group_warehouse_viewer"/>
     <menuitem id="menu_g2p_registry" name="Registry Models" parent="menu_g2p_root" sequence="4"/>
-    <menuitem id="menu_g2p_programs" name="Programs" parent="menu_g2p_root" action="action_g2p_programs" sequence="5"/>
+    <menuitem id="menu_g2p_programs" name="Programs" parent="menu_g2p_root" action="action_g2p_programs" sequence="5" groups="g2p_pbms.group_program_editor,g2p_pbms.group_program_viewer"/>
     
     <!-- Benefit Codes Menu Items -->
 
     <!-- Geography Menu Items -->
-    <menuitem id="menu_g2p_administrative_area_large_action" name="Administrative Areas (Large)" parent="menu_g2p_geography" action="action_g2p_administrative_area_large" sequence="1" />
-    <menuitem id="menu_g2p_administrative_area_small_action" name="Administrative Areas (Small)" parent="menu_g2p_geography" action="action_g2p_administrative_area_small" sequence="2" />
+    <menuitem id="menu_g2p_administrative_area_large_action" name="Administrative Areas (Large)" parent="menu_g2p_geography" action="action_g2p_administrative_area_large" sequence="1" groups="g2p_pbms.group_geography_viewer,g2p_pbms.group_geography_editor"/>
+    <menuitem id="menu_g2p_administrative_area_small_action" name="Administrative Areas (Small)" parent="menu_g2p_geography" action="action_g2p_administrative_area_small" sequence="2" groups="g2p_pbms.group_geography_viewer,g2p_pbms.group_geography_editor"/>
 
     <!-- Service Providers Menu Items -->
-    <menuitem id="menu_g2p_sponsor_bank_action" name="Sponsor Banks" parent="menu_g2p_service_providers" action="action_g2p_sponsor_bank" sequence="1" />
-    <menuitem id="menu_g2p_warehouse_action" name="Warehouses" parent="menu_g2p_service_providers" action="action_g2p_warehouse" sequence="2" />
-    <menuitem id="menu_g2p_agency_action" name="Agencies" parent="menu_g2p_service_providers" action="action_g2p_agency" sequence="3"/>
+    <menuitem id="menu_g2p_sponsor_bank_action" name="Sponsor Banks" parent="menu_g2p_service_providers" action="action_g2p_sponsor_bank" sequence="1" groups="g2p_pbms.group_warehouse_editor,g2p_pbms.group_warehouse_viewer"/>
+    <menuitem id="menu_g2p_warehouse_action" name="Warehouses" parent="menu_g2p_service_providers" action="action_g2p_warehouse" sequence="2" groups="g2p_pbms.group_warehouse_editor,g2p_pbms.group_warehouse_viewer"/>
+    <menuitem id="menu_g2p_agency_action" name="Agencies" parent="menu_g2p_service_providers" action="action_g2p_agency" sequence="3" groups="g2p_pbms.group_agency_viewer,g2p_pbms.group_agency_editor"/>
 
     <!-- Registry Menu Items (inherited and populated by g2p_registry_addons) -->
     

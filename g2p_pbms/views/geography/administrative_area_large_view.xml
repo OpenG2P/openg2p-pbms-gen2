@@ -32,7 +32,7 @@
                 </control>
                 <field name="area_mnemonic"/>
                 <field name="area_description"/>
-                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit"/>
+                <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_geography_editor"/>
             </tree>
         </field>
     </record>

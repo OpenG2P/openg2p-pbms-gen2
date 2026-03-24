@@ -5,34 +5,31 @@
         <xpath expr="//div[contains(@class, 'o_list_buttons')]" position="inside">
             <t t-set-slot="control-panel-create-button">
                 <button
-                    t-if="model.root.resModel == 'g2p.agency'"
+                    t-if="props.resModel == 'g2p.agency' and permissions.canCreateAgency"
                     type="button"
                     class="btn btn-primary o_list_button_add_agency"
-                    accesskey="p"
                     title="Create a New Agency"
                     t-on-click="load_agency_wizard">
                     Create Agency
                 </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.warehouse' and env.searchModel and env.searchModel.context and !env.searchModel.context.default_is_sponsor_bank"
+                    t-if="model.root.resModel == 'g2p.warehouse' and env.searchModel and env.searchModel.context and !env.searchModel.context.default_is_sponsor_bank and permissions.canCreateWarehouse"
                     type="button"
                     class="btn btn-primary o_list_button_add_warehouse"
-                    accesskey="p"
                     title="Create a New Warehouse"
                     t-on-click="load_warehouse_wizard">
                     Create Warehouse
                 </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.warehouse' and env.searchModel and env.searchModel.context and env.searchModel.context.default_is_sponsor_bank"
+                    t-if="model.root.resModel == 'g2p.warehouse' and env.searchModel and env.searchModel.context and env.searchModel.context.default_is_sponsor_bank and permissions.canCreateSponsorBank"
                     type="button"
                     class="btn btn-primary o_list_button_add_sponsor_bank"
-                    accesskey="p"
                     title="Create a New Sponsor Bank"
                     t-on-click="load_sponsor_bank_wizard">
                     Create Sponsor Bank
-                </button>                
+                </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.benefit.codes'"
+                    t-if="model.root.resModel == 'g2p.benefit.codes' and permissions.canCreateBenefitCode"
                     type="button"
                     class="btn btn-primary o_list_button_add_codes"
                     accesskey="p"
@@ -41,22 +38,28 @@
                     Create Code
                 </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.program.definition'"
+                    t-if="model.root.resModel == 'g2p.program.definition' and permissions.canCreateProgram"
                     type="button"
                     class="btn btn-primary o_list_button_add_program"
-                    accesskey="p"
                     title="Create a New Program"
                     t-on-click="load_program_wizard">
                     Create Program
                 </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.regions'"
+                    t-if="model.root.resModel == 'g2p.administrative.area.large' and permissions.canCreateGeography"
                     type="button"
-                    class="btn btn-primary o_list_button_add_region"
-                    accesskey="p"
-                    title="Create a New Region"
-                    t-on-click="load_region_wizard">
-                    Create Region
+                    class="btn btn-primary o_list_button_add_large_area"
+                    title="Create a New Large Administrative Area"
+                    t-on-click="load_administrative_area_large_wizard">
+                    Create Large Area
+                </button>
+                <button
+                    t-if="model.root.resModel == 'g2p.administrative.area.small' and permissions.canCreateGeography"
+                    type="button"
+                    class="btn btn-primary o_list_button_add_small_area"
+                    title="Create a New Small Administrative Area"
+                    t-on-click="load_administrative_area_small_wizard">
+                    Create Small Area
                 </button>
             </t>
         </xpath>
@@ -71,7 +74,8 @@
                 model.root.resModel != 'g2p.benefit.classification.codes' and
                 model.root.resModel != 'g2p.benefit.codes' and
                 model.root.resModel != 'g2p.program.definition' and
-                model.root.resModel != 'g2p.regions'
+                model.root.resModel != 'g2p.administrative.area.large' and
+                model.root.resModel != 'g2p.administrative.area.small'
             </attribute>
         </xpath>
     </t>
@@ -83,7 +87,8 @@
                 model.root.resModel != 'g2p.benefit.classification.codes' and
                 model.root.resModel != 'g2p.benefit.codes' and
                 model.root.resModel != 'g2p.program.definition' and
-                model.root.resModel != 'g2p.regions'
+                model.root.resModel != 'g2p.administrative.area.large' and
+                model.root.resModel != 'g2p.administrative.area.small'
             </attribute>
         </xpath>
         <xpath expr="//button[contains(@class, 'btn-outline-primary o_form_button_create')]" position="attributes">
@@ -93,7 +98,8 @@
                 model.root.resModel != 'g2p.benefit.classification.codes' and
                 model.root.resModel != 'g2p.benefit.codes' and
                 model.root.resModel != 'g2p.program.definition' and
-                model.root.resModel != 'g2p.regions'
+                model.root.resModel != 'g2p.administrative.area.large' and
+                model.root.resModel != 'g2p.administrative.area.small'
             </attribute>
         </xpath>
     </t>

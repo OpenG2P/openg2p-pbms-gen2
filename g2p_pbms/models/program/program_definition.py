@@ -57,12 +57,24 @@ class G2PProgramDefinition(models.Model):
         help="If checked, the program will require benefits to be collected from specified agency and warehouse. If unchecked, beneficiaries may collect benefits from any agency/warehouse in the country. " \
     )
     verifications_for_enrolment = fields.Integer(
-        string="Verifications required for enrolment"
+        string="Verifications required for enrolment",
+        help="Minimum number of verifications required before lists can be approved"
+    )
+    auto_approve_enrolment = fields.Boolean(
+        string="Auto approve enrollment",
+        default=False,
+        help="If enabled and the number of required verifications is 0, lists will be automatically approved as soon as they are created, without needing any verifications."
     )
     verifications_for_disbursement = fields.Integer(
-        string="Verifications required for disbursement"
-    )
+        string="Verifications required for disbursement",
+        help="Minimum number of verifications required before lists can be approved"
 
+    )
+    auto_approve_disbursement = fields.Boolean(
+        string="Auto approve disbursement",
+        default=False,
+        help="If enabled and the number of required verifications is 0, lists will be automatically approved as soon as they are created, without needing any verifications."
+    )
     # Cycle configuration
     enrollment_frequency = fields.Selection([
         ('Daily', 'Daily'),

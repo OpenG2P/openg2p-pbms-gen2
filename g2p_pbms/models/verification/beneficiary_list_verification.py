@@ -10,6 +10,11 @@ _logger = logging.getLogger(__name__)
 
 class G2PBeneficiaryListVerification(models.Model):
     _inherit = "storage.file"
+    
+    _sql_constraints = [
+        ('unique_user_beneficiary_list_verification', 'UNIQUE(verified_by, beneficiary_list_id)', 
+         'A user can only verify the same beneficiary list once!')
+    ]
 
     name = fields.Char(
         string="File Name",

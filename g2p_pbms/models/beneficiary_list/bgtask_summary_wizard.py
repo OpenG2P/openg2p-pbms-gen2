@@ -10,6 +10,29 @@ from odoo.addons.g2p_registry_type_addon.models import (
     G2PTargetModelMapping,
     G2PRegistryType,
 )
+from openg2p_fastapi_common.schemas import G2PRequestHeader, G2PPaginationRequest
+from openg2p_g2p_bridge_models.schemas import (
+    DisbursementEnvelopeStatusRequest,
+    DisbursementEnvelopeStatusRequestBody,
+    DisbursementEnvelopeStatusResponse,
+    DisbursementBatchControlRequest,
+    DisbursementBatchControlRequestBody,
+    DisbursementBatchControlResponse,
+)
+from openg2p_bg_task_models.schemas import (
+    BeneficiarySearchRequest,
+    BeneficiarySearchRequestBody,
+    BeneficiarySearchRequestPayload,
+    SummaryRequest,
+    SummaryRequestBody,
+    SummaryRequestPayload,
+    DisbursementEnvelopeRequest,
+    DisbursementEnvelopeRequestBody,
+    DisbursementEnvelopeRequestPayload,
+    DisbursementBatchRequest,
+    DisbursementBatchRequestBody,
+    DisbursementBatchRequestPayload,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -89,12 +112,10 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     show_approve_enrolment_button = fields.Boolean(
         string="Show Approve Enrolment Button",
         compute="_compute_show_approve_enrolment_button",
-        store=True
     )
     show_approve_disbursement_button = fields.Boolean(
         string="Show Approve Disbursement Button",
         compute="_compute_show_approve_disbursement_button",
-        store=True
     )
 
     @api.depends('program_id', 'verification_ids')
@@ -102,7 +123,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         for rec in self:
             show_button = False
             program = rec.program_id
-            if program and program.verifications_for_enrolment:
+            if program and program.verifications_for_enrolment is not None:
                 try:
                     required_reviews = int(program.verifications_for_enrolment)
                 except (ValueError, TypeError):
@@ -117,7 +138,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         for rec in self:
             show_button = False
             program = rec.program_id
-            if program and program.verifications_for_disbursement:
+            if program and program.verifications_for_disbursement is not None:
                 try:
                     required_reviews = int(program.verifications_for_disbursement)
                 except (ValueError, TypeError):
@@ -144,7 +165,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
 
     def _build_sql_query(self, odoo_domain, target_registry):
         sql_query=""
-        order_by_field="id"
+        order_by_field="internal_record_id"
         try:
             domain_value = safe_eval(odoo_domain or "[]")
         except Exception as e:
@@ -212,7 +233,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     @api.model
     def get_beneficiaries(self, wizard_id, page, page_size, odoo_domain):
         wizard = self.sudo().browse(wizard_id)
-        api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.bgtask_api_url')
+        api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
         sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 
         if not api_url:
@@ -220,29 +241,28 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
 
         sql_query, order_by_condition = self._build_sql_query(odoo_domain, wizard.target_registry)
         endpoint = f"{api_url}/search_beneficiaries"
-        payload = {
-            "signature": "string",
-            "header": {
-                "version": "1.0.0",
-                "message_id": "string",
-                "message_ts": "string",
-                "action": "search_beneficiaries",
-                "sender_id": sender_id,
-                "sender_uri": "",
-                "receiver_id": "",
-                "total_count": 0,
-                "is_msg_encrypted": False,
-                "meta": "string"
-            },
-            "message": {
-                "beneficiary_list_id": wizard.beneficiary_list_uuid,
-                "target_registry": wizard.target_registry,
-                "page": page,
-                "page_size": page_size,
-                "search_query": sql_query or "",
-                "order_by": order_by_condition or "id asc",
-            }
-        }
+
+        payload = BeneficiarySearchRequest(
+            request_header=G2PRequestHeader(
+                sender_app_mnemonic=sender_id,
+                sender_app_url="",
+                request_id="string",
+                request_timestamp=datetime.utcnow().isoformat(),
+            ),
+            request_body=BeneficiarySearchRequestBody(
+                pagination_request=G2PPaginationRequest(
+                    current_page=page,
+                    page_size=page_size,
+                    sort_by=order_by_condition or "internal_record_id asc",
+                    search_text=sql_query or "",
+                ),
+                request_payload=BeneficiarySearchRequestPayload(
+                    beneficiary_list_id=wizard.beneficiary_list_uuid,
+                    target_registry=wizard.target_registry,
+                ),
+            ),
+        )
+        payload = payload.model_dump(mode="json")
 
         jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
         headers = {
@@ -256,11 +276,15 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         except Exception as e:
             _logger.error("API call failed: %s", e)
             return {
-                "message": {
-                    "total_beneficiary_count": 0,
-                    "page": page,
-                    "page_size": page_size,
-                    "beneficiaries": []
+                "response_body": {
+                    "pagination_response": {
+                        "number_of_items": 0,
+                        "number_of_pages": 0,
+                    },
+                    "response_payload": {
+                        "beneficiary_count": 0,
+                        "beneficiaries": []
+                    }
                 }
             }
         return response_json
@@ -270,31 +294,28 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         excluded_keys = ['id', 'target_registry']
         for wizard in self:
             wizard.summary_line_ids = [(5, 0, 0)]
-            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.bgtask_api_url')
+            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
             sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 
             if not api_url:
                 _logger.error("API_URL not set in environment")
             endpoint = f"{api_url}/summary"
-            payload = {
-                "signature": "string",
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "summary",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": {
-                    "beneficiary_list_id": wizard.beneficiary_list_uuid,
-                    "target_registry": wizard.target_registry
-                }
-            }
+
+            payload = SummaryRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                ),
+                request_body=SummaryRequestBody(
+                    request_payload=SummaryRequestPayload(
+                        beneficiary_list_id=wizard.beneficiary_list_uuid,
+                        target_registry=wizard.target_registry,
+                    ),
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -308,14 +329,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 _logger.debug("API response: %s", api_response)
             except Exception as e:
                 _logger.error("API call failed at summary API endpoint %s: %s" % (endpoint, str(e)))
-                return {
-                    "message": {
-                        "beneficiary_list_summary": {},
-                        "registry_summary": {}
-                    }
-                }
+                return
+
             lines = []
-            message = api_response.get('message', {})
+            response_body = api_response.get('response_body', {})
+            response_payload = response_body.get('response_payload', {})
+            summary = response_payload.get('summary', {})
 
             # Prepare benefit_code_id to mnemonic mapping
             benefit_code_obj = self.env['g2p.benefit.codes'].sudo()
@@ -324,7 +343,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             benefit_code_id_to_unit = {str(b.id): b.measurement_unit for b in all_benefit_codes}
 
             # Flatten all keys from beneficiary_list_summary
-            for key, value in message.get('beneficiary_list_summary', {}).items():
+            for key, value in summary.get('beneficiary_list_summary', {}).items():
                 if key in excluded_keys or value is None:
                     continue
                 if isinstance(value, dict):
@@ -348,7 +367,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                     }))
 
             # Flatten all keys from registry_summary
-            for key, value in message.get('registry_summary', {}).items():
+            for key, value in summary.get('registry_summary', {}).items():
                 if key in excluded_keys or value is None:
                     continue
                 if isinstance(value, dict):
@@ -380,31 +399,28 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             wizard.disbursement_envelope_line_ids = [(5, 0, 0)]
             if (wizard.list_stage or '').lower() != 'disbursement' or not wizard.beneficiary_list_uuid:
                 continue
-            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.bgtask_api_url')
+            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
             sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 
             if not api_url:
                 _logger.error("API_URL not set in environment")
                 continue
             endpoint = f"{api_url}/disbursement_envelope"
-            payload = {
-                "signature": "string",
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "disbursement_envelope",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": {
-                    "beneficiary_list_id": wizard.beneficiary_list_uuid
-                }
-            }
+
+            payload = DisbursementEnvelopeRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                ),
+                request_body=DisbursementEnvelopeRequestBody(
+                    request_payload=DisbursementEnvelopeRequestPayload(
+                        beneficiary_list_id=wizard.beneficiary_list_uuid,
+                    ),
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -419,8 +435,9 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             except Exception as e:
                 _logger.error("Disbursement Envelope API call failed: %s", e)
                 continue
-            message = api_response.get('message', {})
-            envelope_list = message.get('disbursement_envelopes', [])
+            response_body = api_response.get('response_body', {})
+            response_payload = response_body.get('response_payload', {})
+            envelope_list = response_payload.get('disbursement_envelopes', [])
             lines = []
             # Use the model's _fields attribute via env, not via the class directly
             envelope_model = self.env['g2p.api.disbursement.envelope.line']
@@ -442,31 +459,28 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             wizard.disbursement_batch_line_ids = [(5, 0, 0)]
             if (wizard.list_stage or '').lower() != 'disbursement' or not wizard.beneficiary_list_uuid:
                 continue
-            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.bgtask_api_url')
+            api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
             sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 
             if not api_url:
                 _logger.error("API_URL not set in environment")
                 continue
             endpoint = f"{api_url}/disbursement_batch"
-            payload = {
-                "signature": "string",
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "disbursement_batch",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": {
-                    "beneficiary_list_id": wizard.beneficiary_list_uuid
-                }
-            }
+
+            payload = DisbursementBatchRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                ),
+                request_body=DisbursementBatchRequestBody(
+                    request_payload=DisbursementBatchRequestPayload(
+                        beneficiary_list_id=wizard.beneficiary_list_uuid,
+                    ),
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -481,8 +495,9 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             except Exception as e:
                 _logger.error("Disbursement Batch API call failed: %s", e)
                 continue
-            message = api_response.get('message', {})
-            batch_list = message.get('disbursement_batches', [])
+            response_body = api_response.get('response_body', {})
+            response_payload = response_body.get('response_payload', {})
+            batch_list = response_payload.get('disbursement_batches', [])
             lines = []
             # Use the model's _fields attribute via env, not via the class directly
             batch_model = self.env['g2p.api.disbursement.batch.line']
@@ -530,23 +545,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             else:
                 wizard.verification_ids = [(5, 0, 0)]
 
-    # def action_publish_to_communities(self):
-    #     allowed_group = 'g2p_pbms.group_beneficiary_list_reviewer'
-    #     if not self.env.user.has_group(allowed_group):
-    #         raise AccessError(_("You are not allowed to perform this action."))
-        
-    #     self.ensure_one()
-    #     if not self.list_workflow_status == 'published_to_communities':
-    #         self.list_workflow_status = 'published_to_communities'
-    #         self.env['g2p.beneficiary.list'].browse(self.beneficiary_list_id).write({
-    #             'list_workflow_status': 'published_to_communities'
-    #         })
-
-    def action_approve_final_enrollment(self):
-        allowed_group = 'g2p_pbms.group_enrolment_reviewer'
-        if not self.env.user.has_group(allowed_group):
-            raise AccessError(_("You are not allowed to perform this action."))
-
+    def approve_final_enrollment(self):
         self.ensure_one()
         if not self.list_workflow_status == 'approved_final_enrolment':
             self.list_workflow_status = 'approved_final_enrolment'
@@ -559,10 +558,56 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 'approved_for_enrollment': True,
             })
 
-    def action_record_verifications(self):
-        allowed_group = 'g2p_pbms.group_beneficiary_list_reviewer'
+    def action_approve_final_enrollment(self):
+        allowed_group = 'g2p_pbms.group_enrolment_approver'
         if not self.env.user.has_group(allowed_group):
             raise AccessError(_("You are not allowed to perform this action."))
+
+        self.approve_final_enrollment()
+    
+    def approve_for_disbursement(self):
+        self.ensure_one()
+        if not self.list_workflow_status == 'approved_for_disbursement':
+            self.list_workflow_status = 'approved_for_disbursement'
+            self.approved_for_disbursement = True
+            self.env['g2p.beneficiary.list'].browse(self.beneficiary_list_id).write({
+                'list_workflow_status': 'approved_for_disbursement',
+                'approval_date': fields.Date.context_today(self),
+                'envelope_creation_status': 'pending'
+            })
+            self.env['g2p.disbursement.cycle'].browse(self.disbursement_cycle_id).write({
+                'approved_for_disbursement': True,
+            })
+
+    def action_approve_for_disbursement(self):
+        allowed_group = 'g2p_pbms.group_disbursement_approver'
+        if not self.env.user.has_group(allowed_group):
+            raise AccessError(_("You are not allowed to perform this action."))
+        
+        self.approve_for_disbursement()
+
+    def action_refresh_data(self):
+        """Force refresh of data from database"""
+        self.ensure_one()
+        # Clear cache to force fresh database reads
+        self._invalidate_cache()
+        # Re-read from database
+        self.invalidate_recordset()
+        return True
+
+    def action_record_verifications(self):
+        allowed_group = 'g2p_pbms.group_beneficiary_list_verifier'
+        if not self.env.user.has_group(allowed_group):
+            raise AccessError(_("You are not allowed to perform this action."))
+        
+        program = self.program_id
+        if not program:
+            raise UserError(_("No program is linked to this record."))
+
+        if self.list_stage == 'enrollment' and self.list_workflow_status!='approved_final_enrolment' and program.auto_approve_enrolment:
+            self.approve_final_enrollment(self)
+        elif self.list_stage == 'disbursement' and self.list_workflow_status!='approved_for_disbursement' and program.auto_approve_disbursement:
+            self.approve_for_disbursement(self)
         
         self.ensure_one()
         return {
@@ -577,24 +622,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 'beneficiary_list_verification_form_edit': True,
             },
         }
-
-    def action_approve_for_disbursement(self):
-        allowed_group = 'g2p_pbms.group_disbursement_reviewer'
-        if not self.env.user.has_group(allowed_group):
-            raise AccessError(_("You are not allowed to perform this action."))
-        
-        self.ensure_one()
-        if not self.list_workflow_status == 'approved_for_disbursement':
-            self.list_workflow_status = 'approved_for_disbursement'
-            self.approved_for_disbursement = True
-            self.env['g2p.beneficiary.list'].browse(self.beneficiary_list_id).write({
-                'list_workflow_status': 'approved_for_disbursement',
-                'approval_date': fields.Date.context_today(self),
-                'envelope_creation_status': 'pending'
-            })
-            self.env['g2p.disbursement.cycle'].browse(self.disbursement_cycle_id).write({
-                'approved_for_disbursement': True,
-            })
 
 class G2PAPISummaryLine(models.TransientModel):
     _name = 'g2p.api.summary.line'
@@ -656,21 +683,34 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
             if not api_url:
                 _logger.error("Bridge API URL not set in environment")
             endpoint = f"{api_url}/get_disbursement_envelope_status"
-            payload = {
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "get_disbursement_envelope_status",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": self.disbursement_envelope_id,
-            }
+            # payload = {
+            #     "header": {
+            #         "version": "1.0.0",
+            #         "message_id": "string",
+            #         "message_ts": "string",
+            #         "action": "get_disbursement_envelope_status",
+            #         "sender_id": sender_id,
+            #         "sender_uri": "",
+            #         "receiver_id": "",
+            #         "total_count": 0,
+            #         "is_msg_encrypted": False,
+            #         "meta": "string"
+            #     },
+            #     "message": self.disbursement_envelope_id,
+            # }
+            payload = DisbursementEnvelopeStatusRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                    instance_id="string"
+                ),
+                request_body=DisbursementEnvelopeStatusRequestBody(
+                    request_payload=self.disbursement_envelope_id
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -681,79 +721,87 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
             try:
                 response = requests.post(endpoint, json=payload, timeout=10, headers=headers)
                 response.raise_for_status()
-                resp_data = response.json()
-                _logger.debug("Disbursement ENvelope Status Response: %s", resp_data)
-
+                _logger.debug("Disbursement Envelope Status Response: %s", response.json())
+                disbursement_envelope_status_response = DisbursementEnvelopeStatusResponse.model_validate(
+                    response.json()
+                )
             except Exception as e:
                 _logger.error("API call failed: %s", e)
-                return
+                raise UserError("Failed to fetch disbursement envelope status: %s" % e) from e
 
-            message = resp_data.get("message", {})
+            message = (
+                disbursement_envelope_status_response.response_body.response_payload
+                if disbursement_envelope_status_response.response_body
+                else None
+            )
+
+            if not message:
+                raise UserError("No disbursement envelope status returned.")
 
             summary_vals = {
                 "wizard_id": self.wizard_id.id if self.wizard_id else False,
-                "disbursement_envelope_id": message.get("disbursement_envelope_id"),
+                "disbursement_envelope_id": message.disbursement_envelope_id,
                 "benefit_code_id": self.benefit_code_id,
-                "benefit_code_mnemonic": message.get("benefit_code_mnemonic"),
-                "benefit_type": message.get("benefit_type"),
-                "measurement_unit": message.get("measurement_unit"),
-                "number_of_beneficiaries_received": message.get("number_of_beneficiaries_received"),
-                "number_of_beneficiaries_declared": message.get("number_of_beneficiaries_declared"),
-                "number_of_disbursements_declared": message.get("number_of_disbursements_declared"),
-                "number_of_disbursements_received": message.get("number_of_disbursements_received"),
+                "benefit_code_mnemonic": message.benefit_code_mnemonic,
+                "benefit_type": message.benefit_type,
+                "measurement_unit": message.measurement_unit,
+                "number_of_beneficiaries_received": message.number_of_beneficiaries_received,
+                "number_of_beneficiaries_declared": message.number_of_beneficiaries_declared,
+                "number_of_disbursements_declared": message.number_of_disbursements_declared,
+                "number_of_disbursements_received": message.number_of_disbursements_received,
                 "total_disbursement_quantity_declared": (
-                    "{:,}".format(int(message.get("total_disbursement_quantity_declared", 0)))
-                    + (" " + str(message.get("measurement_unit", "")) if message.get("measurement_unit") else "")
-                    if message.get("total_disbursement_quantity_declared") is not None else ""
+                    "{:,}".format(int(message.total_disbursement_quantity_declared))
+                    + (" " + str(message.measurement_unit) if message.measurement_unit else "")
+                    if message.total_disbursement_quantity_declared is not None else ""
                 ),
                 "total_disbursement_quantity_received": (
-                    "{:,}".format(int(message.get("total_disbursement_quantity_received", 0)))
-                    + (" " + str(message.get("measurement_unit", "")) if message.get("measurement_unit") else "")
-                    if message.get("total_disbursement_quantity_received") is not None else ""
+                    "{:,}".format(int(message.total_disbursement_quantity_received))
+                    + (" " + str(message.measurement_unit) if message.measurement_unit else "")
+                    if message.total_disbursement_quantity_received is not None else ""
                 ),
-                "funds_available_with_bank": message.get("funds_available_with_bank"),
-                "funds_available_latest_timestamp": self.odoo_datetime_format(message.get("funds_available_latest_timestamp")),
-                "funds_available_latest_error_code": message.get("funds_available_latest_error_code"),
-                "funds_available_attempts": message.get("funds_available_attempts"),
-                "funds_blocked_with_bank": message.get("funds_blocked_with_bank"),
-                "funds_blocked_latest_timestamp": self.odoo_datetime_format(message.get("funds_blocked_latest_timestamp")),
-                "funds_blocked_latest_error_code": message.get("funds_blocked_latest_error_code"),
-                "funds_blocked_attempts": message.get("funds_blocked_attempts"),
-                "funds_blocked_reference_number": message.get("funds_blocked_reference_number"),
-                "number_of_disbursements_shipped": message.get("number_of_disbursements_shipped"),
-                "number_of_disbursements_reconciled": message.get("number_of_disbursements_reconciled"),
-                "number_of_disbursements_reversed": message.get("number_of_disbursements_reversed"),
-                "no_of_warehouses_allocated": message.get("no_of_warehouses_allocated"),
-                "no_of_warehouses_notified": message.get("no_of_warehouses_notified"),
-                "no_of_agencies_allocated": message.get("no_of_agencies_allocated"),
-                "no_of_agencies_notified": message.get("no_of_agencies_notified"),
-                "no_of_beneficiaries_notified": message.get("no_of_beneficiaries_notified"),
-                "no_of_pods_received": message.get("no_of_pods_received"),
+                "funds_available_with_bank": message.funds_available_with_bank.value if message.funds_available_with_bank else None,
+                "funds_available_latest_timestamp": self.odoo_datetime_format(message.funds_available_latest_timestamp) if message.funds_available_latest_timestamp else None,
+                "funds_available_latest_error_code": message.funds_available_latest_error_code,
+                "funds_available_attempts": message.funds_available_attempts,
+                "funds_blocked_with_bank": message.funds_blocked_with_bank.value if message.funds_blocked_with_bank else None,
+                "funds_blocked_latest_timestamp": self.odoo_datetime_format(message.funds_blocked_latest_timestamp) if message.funds_blocked_latest_timestamp else None,
+                "funds_blocked_latest_error_code": message.funds_blocked_latest_error_code,
+                "funds_blocked_attempts": message.funds_blocked_attempts,
+                "funds_blocked_reference_number": message.funds_blocked_reference_number,
+                "number_of_disbursements_shipped": message.number_of_disbursements_shipped,
+                "number_of_disbursements_reconciled": message.number_of_disbursements_reconciled,
+                "number_of_disbursements_reversed": message.number_of_disbursements_reversed,
+                "no_of_warehouses_allocated": message.no_of_warehouses_allocated,
+                "no_of_warehouses_notified": message.no_of_warehouses_notified,
+                "no_of_agencies_allocated": message.no_of_agencies_allocated,
+                "no_of_agencies_notified": message.no_of_agencies_notified,
+                "no_of_beneficiaries_notified": message.no_of_beneficiaries_notified,
+                "no_of_pods_received": message.no_of_pods_received,
             }
 
             geo_lines = []
-            disbursement_batch_control_geos = message.get("disbursement_batch_control_geos", None)
+            disbursement_batch_control_geos = message.disbursement_batch_control_geos
             if disbursement_batch_control_geos:
                 for geo in disbursement_batch_control_geos:
                     geo_lines.append((0, 0, {
-                        "disbursement_batch_control_geo_id": geo.get("disbursement_batch_control_geo_id"),
-                        "disbursement_cycle_id": geo.get("disbursement_cycle_id"),
-                        "disbursement_envelope_id": geo.get("disbursement_envelope_id"),
-                        "disbursement_batch_control_id": geo.get("disbursement_batch_control_id"),
-                        "administrative_zone_id_large": geo.get("administrative_zone_id_large"),
-                        "administrative_zone_mnemonic_large": geo.get("administrative_zone_mnemonic_large"),
-                        "administrative_zone_id_small": geo.get("administrative_zone_id_small"),
-                        "administrative_zone_mnemonic_small": geo.get("administrative_zone_mnemonic_small"),
-                        "no_of_beneficiaries": geo.get("no_of_beneficiaries"),
-                        "total_quantity": geo.get("total_quantity"),
-                        "warehouse_id": geo.get("warehouse_id"),
-                        "warehouse_mnemonic": geo.get("warehouse_mnemonic"),
-                        "warehouse_additional_attributes": geo.get("warehouse_additional_attributes"),
-                        "agency_id": geo.get("agency_id"),
-                        "agency_mnemonic": geo.get("agency_mnemonic"),
-                        "agency_additional_attributes": geo.get("agency_additional_attributes"),
-                        "warehouse_notification_status": geo.get("warehouse_notification_status"),
-                        "agency_notification_status": geo.get("agency_notification_status"),
+                        "disbursement_batch_control_geo_id": geo.disbursement_batch_control_geo_id,
+                        "disbursement_cycle_id": geo.disbursement_cycle_id,
+                        "disbursement_envelope_id": geo.disbursement_envelope_id,
+                        "disbursement_batch_control_id": geo.disbursement_batch_control_id,
+                        "administrative_zone_id_large": geo.administrative_zone_id_large,
+                        "administrative_zone_mnemonic_large": geo.administrative_zone_mnemonic_large,
+                        "administrative_zone_id_small": geo.administrative_zone_id_small,
+                        "administrative_zone_mnemonic_small": geo.administrative_zone_mnemonic_small,
+                        "no_of_beneficiaries": geo.no_of_beneficiaries,
+                        "total_quantity": geo.total_quantity,
+                        "warehouse_id": geo.warehouse_id,
+                        "warehouse_mnemonic": geo.warehouse_mnemonic,
+                        "warehouse_additional_attributes": geo.warehouse_additional_attributes,
+                        "agency_id": geo.agency_id,
+                        "agency_mnemonic": geo.agency_mnemonic,
+                        "agency_additional_attributes": geo.agency_additional_attributes,
+                        "warehouse_notification_status": geo.warehouse_notification_status,
+                        "agency_notification_status": geo.agency_notification_status,
                     }))
             if geo_lines:
                 summary_vals["disbursement_envelope_summary_geo_ids"] = geo_lines
@@ -768,14 +816,18 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
         except Exception as e:
             raise UserError("An error occurred: %s" % e) from e
         
-    # Try parsing ISO 8601 with microseconds
-    def odoo_datetime_format(self, dt_str):
+    def odoo_datetime_format(self, dt_value):
+        if not dt_value:
+            return None
+
+        if isinstance(dt_value, datetime):
+            return dt_value.strftime('%Y-%m-%d %H:%M:%S')
+
         try:
-            dt = datetime.fromisoformat(dt_str)
+            dt = datetime.fromisoformat(dt_value)
             return dt.strftime('%Y-%m-%d %H:%M:%S')
-        # Fallback
         except Exception:
-            return dt_str
+            return dt_value
 
 class G2PAPIDisbursementBatchLine(models.TransientModel):
     _name = 'g2p.api.disbursement.batch.line'
@@ -826,21 +878,34 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             if not api_url:
                 _logger.error("Bridge API URL not set in environment")
             endpoint = f"{api_url}/get_disbursement_batch_control"
-            payload = {
-                "header": {
-                    "version": "1.0.0",
-                    "message_id": "string",
-                    "message_ts": "string",
-                    "action": "get_disbursement_batch_control",
-                    "sender_id": sender_id,
-                    "sender_uri": "",
-                    "receiver_id": "",
-                    "total_count": 0,
-                    "is_msg_encrypted": False,
-                    "meta": "string"
-                },
-                "message": self.batch_id,
-            }
+            # payload = {
+            #     "header": {
+            #         "version": "1.0.0",
+            #         "message_id": "string",
+            #         "message_ts": "string",
+            #         "action": "get_disbursement_batch_control",
+            #         "sender_id": sender_id,
+            #         "sender_uri": "",
+            #         "receiver_id": "",
+            #         "total_count": 0,
+            #         "is_msg_encrypted": False,
+            #         "meta": "string"
+            #     },
+            #     "message": self.batch_id,
+            # }
+            payload = DisbursementBatchControlRequest(
+                request_header=G2PRequestHeader(
+                    sender_app_mnemonic=sender_id,
+                    sender_app_url="",
+                    request_id="string",
+                    request_timestamp=datetime.utcnow().isoformat(),
+                    instance_id="string"
+                ),
+                request_body=DisbursementBatchControlRequestBody(
+                    request_payload=self.batch_id
+                ),
+            )
+            payload = payload.model_dump(mode="json")
 
             jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
             headers = {
@@ -851,69 +916,78 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             try:
                 response = requests.post(endpoint, json=payload, timeout=10, headers=headers)
                 response.raise_for_status()
-                resp_data = response.json()
-                _logger.info("Disbursement Batch Status Response: %s", resp_data)
+                _logger.debug("Disbursement Batch Status Response: %s", response.json())
+                disbursement_batch_control_response = DisbursementBatchControlResponse.model_validate(
+                    response.json()
+                )
             except Exception as e:
                 _logger.error("API call failed: %s", e)
-                return
+                raise UserError("Failed to fetch disbursement batch status: %s" % e) from e
 
-            message = resp_data.get("message", {})
+            message = (
+                disbursement_batch_control_response.response_body.response_payload
+                if disbursement_batch_control_response.response_body
+                else None
+            )
+
+            if not message:
+                raise UserError("No disbursement batch control status returned.")
 
             summary_vals = {
                 "wizard_id": self.wizard_id.id if self.wizard_id else False,
-                "disbursement_batch_control_id": message.get("disbursement_batch_control_id"),
-                "disbursement_cycle_id": message.get("disbursement_cycle_id"),
-                "disbursement_cycle_code_mnemonic": message.get("disbursement_cycle_code_mnemonic"),
-                "disbursement_envelope_id": message.get("disbursement_envelope_id"),
-                "benefit_code_id": message.get("benefit_code_id"),
-                "benefit_code_mnemonic": message.get("benefit_code_mnemonic"),
-                "benefit_type": message.get("benefit_type"),
-                "measurement_unit": message.get("measurement_unit"),
-                "fa_resolution_status": message.get("fa_resolution_status"),
-                "fa_resolution_timestamp": self.odoo_datetime_format(message.get("fa_resolution_timestamp")),
-                "fa_resolution_latest_error_code": message.get("fa_resolution_latest_error_code"),
-                "fa_resolution_attempts": message.get("fa_resolution_attempts"),
-                "sponsor_bank_dispatch_status": message.get("sponsor_bank_dispatch_status"),
-                "sponsor_bank_dispatch_timestamp": self.odoo_datetime_format(message.get("sponsor_bank_dispatch_timestamp")),
-                "sponsor_bank_dispatch_latest_error_code": message.get("sponsor_bank_dispatch_latest_error_code"),
-                "sponsor_bank_dispatch_attempts": message.get("sponsor_bank_dispatch_attempts"),
-                "geo_resolution_status": message.get("geo_resolution_status"),
-                "geo_resolution_timestamp": self.odoo_datetime_format(message.get("geo_resolution_timestamp")),
-                "geo_resolution_latest_error_code": message.get("geo_resolution_latest_error_code"),
-                "geo_resolution_attempts": message.get("geo_resolution_attempts"),
-                "warehouse_allocation_status": message.get("warehouse_allocation_status"),
-                "warehouse_allocation_timestamp": self.odoo_datetime_format(message.get("warehouse_allocation_timestamp")),
-                "warehouse_allocation_latest_error_code": message.get("warehouse_allocation_latest_error_code"),
-                "warehouse_allocation_attempts": message.get("warehouse_allocation_attempts"),
-                "agency_allocation_status": message.get("agency_allocation_status"),
-                "agency_allocation_timestamp": self.odoo_datetime_format(message.get("agency_allocation_timestamp")),
-                "agency_allocation_latest_error_code": message.get("agency_allocation_latest_error_code"),
-                "agency_allocation_attempts": message.get("agency_allocation_attempts"),
+                "disbursement_batch_control_id": message.disbursement_batch_control_id,
+                "disbursement_cycle_id": message.disbursement_cycle_id,
+                "disbursement_cycle_code_mnemonic": message.disbursement_cycle_code_mnemonic,
+                "disbursement_envelope_id": message.disbursement_envelope_id,
+                "benefit_code_id": message.benefit_code_id,
+                "benefit_code_mnemonic": message.benefit_code_mnemonic,
+                "benefit_type": message.benefit_type,
+                "measurement_unit": message.measurement_unit,
+                "fa_resolution_status": message.fa_resolution_status,
+                "fa_resolution_timestamp": self.odoo_datetime_format(message.fa_resolution_timestamp) if message.fa_resolution_timestamp else None,
+                "fa_resolution_latest_error_code": message.fa_resolution_latest_error_code,
+                "fa_resolution_attempts": message.fa_resolution_attempts,
+                "sponsor_bank_dispatch_status": message.sponsor_bank_dispatch_status,
+                "sponsor_bank_dispatch_timestamp": self.odoo_datetime_format(message.sponsor_bank_dispatch_timestamp) if message.sponsor_bank_dispatch_timestamp else None,
+                "sponsor_bank_dispatch_latest_error_code": message.sponsor_bank_dispatch_latest_error_code,
+                "sponsor_bank_dispatch_attempts": message.sponsor_bank_dispatch_attempts,
+                "geo_resolution_status": message.geo_resolution_status,
+                "geo_resolution_timestamp": self.odoo_datetime_format(message.geo_resolution_timestamp) if message.geo_resolution_timestamp else None,
+                "geo_resolution_latest_error_code": message.geo_resolution_latest_error_code,
+                "geo_resolution_attempts": message.geo_resolution_attempts,
+                "warehouse_allocation_status": message.warehouse_allocation_status,
+                "warehouse_allocation_timestamp": self.odoo_datetime_format(message.warehouse_allocation_timestamp) if message.warehouse_allocation_timestamp else None,
+                "warehouse_allocation_latest_error_code": message.warehouse_allocation_latest_error_code,
+                "warehouse_allocation_attempts": message.warehouse_allocation_attempts,
+                "agency_allocation_status": message.agency_allocation_status,
+                "agency_allocation_timestamp": self.odoo_datetime_format(message.agency_allocation_timestamp) if message.agency_allocation_timestamp else None,
+                "agency_allocation_latest_error_code": message.agency_allocation_latest_error_code,
+                "agency_allocation_attempts": message.agency_allocation_attempts,
             }
 
             geo_lines = []
-            disbursement_batch_control_geos = message.get("disbursement_batch_control_geos", None)
+            disbursement_batch_control_geos = message.disbursement_batch_control_geos
             if disbursement_batch_control_geos:
                 for geo in disbursement_batch_control_geos:
                     geo_lines.append((0, 0, {
-                        "disbursement_batch_control_geo_id": geo.get("disbursement_batch_control_geo_id"),
-                        "disbursement_cycle_id": geo.get("disbursement_cycle_id"),
-                        "disbursement_envelope_id": geo.get("disbursement_envelope_id"),
-                        "disbursement_batch_control_id": geo.get("disbursement_batch_control_id"),
-                        "administrative_zone_id_large": geo.get("administrative_zone_id_large"),
-                        "administrative_zone_mnemonic_large": geo.get("administrative_zone_mnemonic_large"),
-                        "administrative_zone_id_small": geo.get("administrative_zone_id_small"),
-                        "administrative_zone_mnemonic_small": geo.get("administrative_zone_mnemonic_small"),
-                        "no_of_beneficiaries": geo.get("no_of_beneficiaries"),
-                        "total_quantity": geo.get("total_quantity"),
-                        "warehouse_id": geo.get("warehouse_id"),
-                        "warehouse_mnemonic": geo.get("warehouse_mnemonic"),
-                        "warehouse_additional_attributes": geo.get("warehouse_additional_attributes"),
-                        "agency_id": geo.get("agency_id"),
-                        "agency_mnemonic": geo.get("agency_mnemonic"),
-                        "agency_additional_attributes": geo.get("agency_additional_attributes"),
-                        "warehouse_notification_status": geo.get("warehouse_notification_status"),
-                        "agency_notification_status": geo.get("agency_notification_status"),
+                        "disbursement_batch_control_geo_id": geo.disbursement_batch_control_geo_id,
+                        "disbursement_cycle_id": geo.disbursement_cycle_id,
+                        "disbursement_envelope_id": geo.disbursement_envelope_id,
+                        "disbursement_batch_control_id": geo.disbursement_batch_control_id,
+                        "administrative_zone_id_large": geo.administrative_zone_id_large,
+                        "administrative_zone_mnemonic_large": geo.administrative_zone_mnemonic_large,
+                        "administrative_zone_id_small": geo.administrative_zone_id_small,
+                        "administrative_zone_mnemonic_small": geo.administrative_zone_mnemonic_small,
+                        "no_of_beneficiaries": geo.no_of_beneficiaries,
+                        "total_quantity": geo.total_quantity,
+                        "warehouse_id": geo.warehouse_id,
+                        "warehouse_mnemonic": geo.warehouse_mnemonic,
+                        "warehouse_additional_attributes": geo.warehouse_additional_attributes,
+                        "agency_id": geo.agency_id,
+                        "agency_mnemonic": geo.agency_mnemonic,
+                        "agency_additional_attributes": geo.agency_additional_attributes,
+                        "warehouse_notification_status": geo.warehouse_notification_status,
+                        "agency_notification_status": geo.agency_notification_status,
                     }))
             if geo_lines:
                 summary_vals["disbursement_batch_summary_geo_ids"] = geo_lines
@@ -928,10 +1002,15 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
             raise UserError("An error occurred: %s" % e) from e
 
     # Try parsing ISO 8601 with microseconds
-    def odoo_datetime_format(self, dt_str):
+    def odoo_datetime_format(self, dt_value):
+        if not dt_value:
+            return None
+
+        if isinstance(dt_value, datetime):
+            return dt_value.strftime('%Y-%m-%d %H:%M:%S')
+
         try:
-            dt = datetime.fromisoformat(dt_str)
+            dt = datetime.fromisoformat(dt_value)
             return dt.strftime('%Y-%m-%d %H:%M:%S')
-        # Fallback
         except Exception:
-            return dt_str
+            return dt_value

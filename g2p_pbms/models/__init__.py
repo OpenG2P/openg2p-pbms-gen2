@@ -1,6 +1,5 @@
 from .verification import G2PBeneficiaryListVerification
 from .keymanager import KeymanagerProvider
-from .regions import G2PRegions
 from .benefit_codes import (
     G2PBenefitCodes,
     G2PProgramBenefitCodes,
@@ -30,6 +29,6 @@ from .beneficiary_list import (
     G2PAPISummaryLine,
 )
 from .entitlement import G2PEntitlementRuleDefinition 
-from .config_settings import ResConfigSettings, ResGroups
+from .config_settings import ResConfigSettings, ResGroups, ResUsers
 from .g2p_bridge import DisbursementEnvelopeSummaryWizard, DisbursementBatchSummaryWizard
 from .service_providers import G2PAgency, G2PWarehouse

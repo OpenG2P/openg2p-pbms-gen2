@@ -51,6 +51,11 @@ class G2PProgramDefinition(models.Model):
         "program_id",
         string="Disbursement Cycle",
     )
+    workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Approval Workflow Stages",
+    )
     service_providers_required = fields.Boolean(
         string="Service Providers required",
         default=True,
@@ -137,11 +142,22 @@ class G2PProgramDefinition(models.Model):
 
     def action_open_edit(self):
         self.ensure_one()
+        view_mode = self.env.context.get('program_view_mode', 'config')
+        if view_mode == 'management':
+            view_id = self.env.ref('g2p_pbms.view_g2p_programs_management_form').id
+        else:
+            view_id = self.env.ref('g2p_pbms.view_g2p_programs_config_form').id
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'g2p.program.definition',
             'res_id': self.id,
             'view_mode': 'form',
+            'view_id': view_id,
             'target': 'current',
-            'context':{'create': False, 'program_form_edit':True, 'program_form_create':False},
+            'context': {
+                'create': False,
+                'program_form_edit': True,
+                'program_form_create': False,
+                'program_view_mode': view_mode,
+            },
         }

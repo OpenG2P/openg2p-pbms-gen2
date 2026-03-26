@@ -20,6 +20,8 @@ patch(ListController.prototype, {
             canCreateGeography: false,
         });
 
+        this.programConfigViewId = null;
+
         // Load groups before rendering
         onWillStart(async () => {
             this.permissions.canCreateAgency = await this.user.hasGroup("g2p_pbms.group_agency_editor");
@@ -29,6 +31,16 @@ patch(ListController.prototype, {
             this.permissions.canCreateGeography = await this.user.hasGroup("g2p_pbms.group_geography_editor");
 
             this.permissions.canCreateProgram = await this.user.hasGroup("g2p_pbms.group_program_super_administration");
+
+            const configViews = await this.orm.searchRead(
+                "ir.ui.view",
+                [["name", "=", "g2p.programs.config.form"]],
+                ["id"],
+                { limit: 1 }
+            );
+            if (configViews.length) {
+                this.programConfigViewId = configViews[0].id;
+            }
         });
     },
 
@@ -72,9 +84,14 @@ patch(ListController.prototype, {
             type: "ir.actions.act_window",
             res_model: "g2p.program.definition",
             view_mode: "form",
-            views: [[false, "form"]],
+            views: [[this.programConfigViewId || false, "form"]],
             target: "current",
-            context: { create: false, program_form_edit: true, program_form_create: true },
+            context: {
+                create: false,
+                program_form_edit: true,
+                program_form_create: true,
+                program_view_mode: "config",
+            },
         });
     },
 

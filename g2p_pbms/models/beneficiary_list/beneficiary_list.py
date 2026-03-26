@@ -1,5 +1,6 @@
 import uuid
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 
 class G2PBeneficiaryList(models.Model):
@@ -58,7 +59,7 @@ class G2PBeneficiaryList(models.Model):
     envelope_creation_number_of_attempts = fields.Integer(string="Envelope Creation Number of Attempts", default=0)
     envelope_creation_latest_error_code = fields.Char(string="Envelope Creation Latest Error Code", default=None)
     envelope_creation_processed_date = fields.Datetime(string="Envelope Creation Processed Date", default=None)
- 
+
     disbursement_batch_creation_status = fields.Selection(
         [
             ("not_applicable", "not applicable"),
@@ -67,13 +68,13 @@ class G2PBeneficiaryList(models.Model):
             ("complete", "complete"),
             ("failed", "failed")
         ],
-        string="Disbursement Envelope Status",
+        string="Disbursement Batch Creation Status",
         default="not_applicable",
     )
     dbc_number_of_attempts = fields.Integer(string="Disbursement Batch Creation Number of Attempts", default=0)
     dbc_latest_error_code = fields.Char(string="Disbursement Batch Creation Latest Error Code", default=None)
     dbc_processed_date = fields.Datetime(string="Disbursement Batch Creation Processed Date", default=None)
- 
+
     number_of_registrants = fields.Integer(string="Number of Registrants", default=0)
     number_of_entitlements_processed = fields.Integer(string="Number of Entitlements Processed", default=0)
 
@@ -84,6 +85,36 @@ class G2PBeneficiaryList(models.Model):
         ],
         string="List Stage",
     )
+
+    # --- Approval workflow fields ---
+    workflow_approval_status = fields.Selection(
+        [
+            ("PENDING", "Pending"),
+            ("APPROVED", "Approved"),
+            ("REJECTED", "Rejected"),
+        ],
+        string="Approval Status",
+        default="PENDING",
+        index=True,
+    )
+    pending_stage_ids = fields.One2many(
+        "g2p.workflow.pending.stage", "list_id", string="Pending Stage"
+    )
+    stage_history_ids = fields.One2many(
+        "g2p.workflow.stage.history", "list_id", string="Stage History"
+    )
+    current_stage_name = fields.Char(
+        string="Current Stage",
+        compute="_compute_current_stage_name",
+        store=False,
+    )
+    current_stage_number = fields.Integer(
+        string="Stage #",
+        compute="_compute_current_stage_name",
+        store=False,
+    )
+
+    # --- Deprecated fields kept for backward compatibility ---
     approval_date = fields.Date(string="Approval Date", default=None, readonly=True)
     list_workflow_status = fields.Selection(
         [
@@ -99,9 +130,20 @@ class G2PBeneficiaryList(models.Model):
         "beneficiary_list_id",
         string="Community Verification",
     )
-    creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now , readonly=True)
+
+    creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
     processed_date = fields.Datetime(string="Processed Date", default=None, readonly=True)
 
+    @api.depends("pending_stage_ids.current_stage_id")
+    def _compute_current_stage_name(self):
+        for rec in self:
+            pending = rec.pending_stage_ids[:1]
+            if pending and rec.workflow_approval_status == "PENDING":
+                rec.current_stage_name = pending.current_stage_id.stage_name
+                rec.current_stage_number = pending.current_stage_id.stage_number
+            else:
+                rec.current_stage_name = False
+                rec.current_stage_number = 0
 
     @api.depends('enrollment_cycle_id.program_id', 'disbursement_cycle_id.program_id')
     def _compute_program_id(self):
@@ -112,6 +154,104 @@ class G2PBeneficiaryList(models.Model):
             elif record.disbursement_cycle_id:
                 record.program_id = record.disbursement_cycle_id.program_id
                 record.list_stage = "disbursement"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            rec._initialize_workflow()
+        return records
+
+    def _initialize_workflow(self):
+        """Create the initial pending stage record for this list."""
+        self.ensure_one()
+        if not self.program_id:
+            return
+        cycle_type = "ENROLMENT" if self.list_stage == "enrollment" else "DISBURSEMENT"
+        first_stage = self.env["g2p.workflow.stage.definition"].search(
+            [
+                ("program_id", "=", self.program_id.id),
+                ("cycle_type", "=", cycle_type),
+            ],
+            order="stage_number asc",
+            limit=1,
+        )
+        if first_stage:
+            self.env["g2p.workflow.pending.stage"].create({
+                "list_id": self.id,
+                "current_stage_id": first_stage.id,
+                "enqueued_at": fields.Datetime.now(),
+                "stage_status": "PENDING",
+            })
+            self.workflow_approval_status = "PENDING"
+
+    def action_approve_stage(self):
+        """Approve the current pending stage; advance to next or mark APPROVED."""
+        self.ensure_one()
+        pending = self.pending_stage_ids[:1]
+        if not pending:
+            raise UserError("No pending stage found for this list.")
+        if self.workflow_approval_status != "PENDING":
+            raise UserError("List is not in PENDING status.")
+
+        current_stage = pending.current_stage_id
+        list_type = "ENROLMENT" if self.list_stage == "enrollment" else "DISBURSEMENT"
+
+        self.env["g2p.workflow.stage.history"].create({
+            "list_id": self.id,
+            "list_type": list_type,
+            "stage_id": current_stage.id,
+            "enqueued_at": pending.enqueued_at,
+            "acted_by": self.env.user.id,
+            "acted_at": fields.Datetime.now(),
+            "action_type": "APPROVED",
+        })
+
+        if current_stage.is_final_stage:
+            pending.unlink()
+            self.workflow_approval_status = "APPROVED"
+        else:
+            next_stage = self.env["g2p.workflow.stage.definition"].search(
+                [
+                    ("program_id", "=", self.program_id.id),
+                    ("cycle_type", "=", current_stage.cycle_type),
+                    ("stage_number", ">", current_stage.stage_number),
+                ],
+                order="stage_number asc",
+                limit=1,
+            )
+            if next_stage:
+                pending.write({
+                    "current_stage_id": next_stage.id,
+                    "enqueued_at": fields.Datetime.now(),
+                })
+            else:
+                pending.unlink()
+                self.workflow_approval_status = "APPROVED"
+
+    def action_reject_stage(self):
+        """Reject the current pending stage; mark list REJECTED."""
+        self.ensure_one()
+        pending = self.pending_stage_ids[:1]
+        if not pending:
+            raise UserError("No pending stage found for this list.")
+        if self.workflow_approval_status != "PENDING":
+            raise UserError("List is not in PENDING status.")
+
+        current_stage = pending.current_stage_id
+        list_type = "ENROLMENT" if self.list_stage == "enrollment" else "DISBURSEMENT"
+
+        self.env["g2p.workflow.stage.history"].create({
+            "list_id": self.id,
+            "list_type": list_type,
+            "stage_id": current_stage.id,
+            "enqueued_at": pending.enqueued_at,
+            "acted_by": self.env.user.id,
+            "acted_at": fields.Datetime.now(),
+            "action_type": "REJECTED",
+        })
+        pending.unlink()
+        self.workflow_approval_status = "REJECTED"
 
     def action_open_summary_wizard(self):
         if (
@@ -126,7 +266,7 @@ class G2PBeneficiaryList(models.Model):
                 self.env['g2p.enrollment.cycle'].browse(self.enrollment_cycle_id.id).write({
                     'approved_for_enrollment': True,
                 })
-        
+
         if (
             self.list_stage == 'disbursement'
             and self.list_workflow_status != 'approved_for_disbursement'
@@ -139,7 +279,7 @@ class G2PBeneficiaryList(models.Model):
                 self.env['g2p.disbursement.cycle'].browse(self.disbursement_cycle_id.id).write({
                     'approved_for_disbursement': True,
                 })
-        
+
         self.ensure_one()
         wizard_vals = {
             "target_registry": self.program_id.target_registry,

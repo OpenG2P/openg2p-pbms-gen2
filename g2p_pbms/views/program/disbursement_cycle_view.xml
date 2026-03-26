@@ -11,33 +11,48 @@
                 </header>
                 <sheet>
                     <group>
-                        <field name="program_id" readonly="1"/>
-                        <field name="cycle_mnemonic" readonly="is_readonly"/>
-                        <field name="target_registry" invisible="1"/>
-                        <field name="approved_for_disbursement" invisible="1"/>
-                        <field name="is_readonly" invisible="1"/>
+                        <group>
+                            <field name="is_readonly" invisible="1"/>
+                            <field name="has_wip_list" invisible="1"/>
+                            <field name="program_id" readonly="1"/>
+                            <field name="cycle_mnemonic" readonly="is_readonly"/>
+                            <field name="target_registry" invisible="1"/>
+                        </group>
+                        <group string="Summary">
+                            <field name="list_count" string="Total Lists" readonly="1"/>
+                            <field name="approved_count" string="Approved" readonly="1"/>
+                            <field name="pending_count" string="Pending" readonly="1"/>
+                            <field name="wip_stage_name" string="WIP Stage" readonly="1" invisible="not wip_stage_name"/>
+                        </group>
                     </group>
 
-                    <!-- Hide fields during creation -->
                     <notebook>
                         <!-- Priority Rules -->
                         <page string="Disbursement Rules" invisible="id == False">
-                            <field name="priority_rule_ids" readonly="approved_for_disbursement" nolabel="1" options="{'no_quick_create': True}" context="{'default_target_registry': target_registry}"/>
+                            <field name="priority_rule_ids" nolabel="1" options="{'no_quick_create': True}" context="{'default_target_registry': target_registry}"/>
                         </page>
                         <!-- Disbursement List -->
                         <page string="Disbursement List" invisible="id == False">
-                            <field name="beneficiary_list_ids" nolabel="1" readonly="approved_for_disbursement">
-                                <tree default_order="creation_date desc" delete="false" limit="10" >
+                            <field name="beneficiary_list_ids" nolabel="1">
+                                <tree default_order="creation_date desc" delete="false" limit="10">
                                     <control>
-                                        <create string="Create New Disbursement List" />
+                                        <create string="Create New Disbursement List" invisible="parent.has_wip_list"/>
                                     </control>
                                     <field name="mnemonic" string="Mnemonic"/>
                                     <field name="eligibility_process_status" string="Priority Process Status" widget="badge"/>
-                                    <field name="entitlement_process_status" string=" Entitlement Summary Status" widget="badge"/>
+                                    <field name="entitlement_process_status" string="Entitlement Status" widget="badge"/>
+                                    <field name="workflow_approval_status" string="Approval Status" widget="badge"/>
+                                    <field name="current_stage_name" string="Current Stage"/>
                                     <field name="creation_date" string="Created On" readonly="1"/>
                                     <field name="processed_date" string="Processed On" readonly="1"/>
-                                    <field name="list_workflow_status" string="Status" widget="badge" invisible="list_workflow_status != 'approved_for_disbursement'"/>
-                                    <button name="action_open_summary_wizard" type="object" string="View Disbursement List" class="oe_link" invisible="entitlement_process_status!='complete'"/>
+                                    <button name="action_approve_stage" type="object" string="Approve" class="btn-success"
+                                        invisible="workflow_approval_status != 'PENDING'"
+                                        groups="g2p_pbms.group_disbursement_approver"/>
+                                    <button name="action_reject_stage" type="object" string="Reject" class="btn-danger"
+                                        invisible="workflow_approval_status != 'PENDING'"
+                                        groups="g2p_pbms.group_disbursement_approver"/>
+                                    <button name="action_open_summary_wizard" type="object" string="View List" class="oe_link"
+                                        invisible="entitlement_process_status != 'complete'"/>
                                 </tree>
                             </field>
                         </page>
@@ -60,18 +75,17 @@
         <field name="name">g2p.disbursement.cycle.tree</field>
         <field name="model">g2p.disbursement.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="creation_date desc" delete="false" >
+            <tree default_order="creation_date desc" delete="false">
                 <control>
                     <create string="Create New Disbursement Cycle"/>
                 </control>
                 <field name="cycle_mnemonic" string="Cycle"/>
-                <!-- <field name="bridge_envelope_id" readonly="1"/> -->
-                <field name="approved_for_disbursement" widget="boolean_button" readonly="1"/>
-                <!-- <field name="envelope_creation_status" string="Envelope Creation Status" widget="badge"/> -->
-                <!-- <field name="batch_creation_status" string="Disbursement Batch Creation Status" widget="badge"/> -->
+                <field name="list_count" string="# Lists"/>
+                <field name="approved_count" string="# Approved"/>
+                <field name="pending_count" string="# Pending"/>
+                <field name="wip_stage_name" string="WIP Stage"/>
                 <field name="creation_date" string="Created On"/>
-                <button name="action_open_view" type="object" string="View Disbursement Cycle" class="oe_link" />
-                <!-- <button name="action_open_disbursement_envelope_summary_wizard" type="object" string="View Envelope Summary" class="oe_link" invisible="envelope_creation_status != 'complete'"/> -->
+                <button name="action_open_view" type="object" string="View Disbursement Cycle" class="oe_link"/>
             </tree>
         </field>
     </record>

@@ -22,6 +22,7 @@
         "views/program/disbursement_cycle_view.xml",
         "views/program/beneficiary_list_view.xml",
         "views/program/enrollment_cycle_view.xml",
+        "views/workflow/workflow_stage_view.xml",
         "views/eligibility_rule/eligibility_rule_view.xml",
         "views/bgtask_summary/bgtask_summary_view.xml",
         "views/entitlement_rule/entitlement_rule_view.xml",

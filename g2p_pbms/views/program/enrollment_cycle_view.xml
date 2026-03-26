@@ -12,30 +12,46 @@
                     <group colspan="2">
                         <group string="Enrollment Cycle">
                             <field name="is_readonly" invisible="1"/>
+                            <field name="has_wip_list" invisible="1"/>
                             <field name="cycle_number" readonly="1"/>
                             <field name="program_id" readonly="1"/>
-                            <field name="approved_for_enrollment" invisible="1"/>
                         </group>
-                        <group string="Cycle Configuration">
-                            <field name="enrollment_start_date" readonly="is_readonly"/>
-                            <field name="enrollment_end_date" readonly="is_readonly"/>
-                            <field name="disbursement_start_date" readonly="is_readonly" nolabel="0"/>
-                            <field name="disbursement_end_date" readonly="is_readonly" nolabel="0"/>
+                        <group string="Summary">
+                            <field name="list_count" string="Total Lists" readonly="1"/>
+                            <field name="approved_count" string="Approved" readonly="1"/>
+                            <field name="pending_count" string="Pending" readonly="1"/>
+                            <field name="wip_stage_name" string="WIP Stage" readonly="1" invisible="not wip_stage_name"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Enrollment Lists" invisible="id == False">
-                            <field name="beneficiary_list_ids" nolabel="1" readonly="approved_for_enrollment">
-                                <tree default_order="creation_date desc" delete="false" limit="10" >
+                            <field name="beneficiary_list_ids" nolabel="1">
+                                <tree default_order="creation_date desc" delete="false" limit="10">
                                     <control>
-                                        <create string="Create New Enrollment List" />
+                                        <create string="Create New Enrollment List" invisible="parent.has_wip_list"/>
                                     </control>
                                     <field name="mnemonic" string="Mnemonic"/>
-                                    <field name="eligibility_process_status" string="Eligibility Process Status" widget="badge"/>
+                                    <field name="eligibility_process_status" string="Eligibility Status" widget="badge"/>
+                                    <field name="workflow_approval_status" string="Approval Status" widget="badge"/>
+                                    <field name="current_stage_name" string="Current Stage"/>
                                     <field name="creation_date" string="Created On" readonly="1"/>
                                     <field name="processed_date" string="Processed On" readonly="1"/>
-                                    <field name="list_workflow_status" string="Status" widget="badge" invisible="list_workflow_status == 'initiated'"/>                  
-                                    <button name="action_open_summary_wizard" type="object" string="View Enrollment List" class="oe_link" invisible="eligibility_process_status!='complete'"/>
+                                    <button name="action_approve_stage" type="object" string="Approve" class="btn-success"
+                                        invisible="workflow_approval_status != 'PENDING'"
+                                        groups="g2p_pbms.group_enrolment_approver"/>
+                                    <button name="action_reject_stage" type="object" string="Reject" class="btn-danger"
+                                        invisible="workflow_approval_status != 'PENDING'"
+                                        groups="g2p_pbms.group_enrolment_approver"/>
+                                    <button name="action_open_summary_wizard" type="object" string="View List" class="oe_link"
+                                        invisible="eligibility_process_status != 'complete'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Stage History" invisible="id == False">
+                            <field name="beneficiary_list_ids" nolabel="1" readonly="1">
+                                <tree create="0" delete="0" default_order="creation_date desc" limit="10">
+                                    <field name="mnemonic" string="List"/>
+                                    <field name="stage_history_ids" string="History" widget="many2many_tags" readonly="1"/>
                                 </tree>
                             </field>
                         </page>
@@ -61,12 +77,11 @@
                     <create string="Create New Enrollment Cycle"/>
                 </control>
                 <field name="cycle_number" string="Cycle Number"/>
-                <field name="enrollment_start_date" string="Enrollment Start Date"/>
-                <field name="enrollment_end_date" string="Enrollment End Date"/>
-                <field name="disbursement_start_date" string="Disbursement Start Date"/>
-                <field name="disbursement_end_date" string="Disbursement End Date"/>
-                <field name="approved_for_enrollment" string="Approved for Enrollment"/>
-                <button name="action_open_view" type="object" string="View Enrollment Cycle" class="oe_link" />
+                <field name="list_count" string="# Lists"/>
+                <field name="approved_count" string="# Approved"/>
+                <field name="pending_count" string="# Pending"/>
+                <field name="wip_stage_name" string="WIP Stage"/>
+                <button name="action_open_view" type="object" string="View Enrollment Cycle" class="oe_link"/>
             </tree>
         </field>
     </record>

@@ -1,5 +1,6 @@
 from odoo import models, fields, api
-from datetime import date, timedelta
+from odoo.exceptions import UserError
+
 
 class G2PEnrollmentCycle(models.Model):
     _name = "g2p.enrollment.cycle"
@@ -13,20 +14,50 @@ class G2PEnrollmentCycle(models.Model):
     beneficiary_list_ids = fields.One2many(
         "g2p.beneficiary.list", "enrollment_cycle_id", string="Beneficiary Lists"
     )
-    enrollment_start_date = fields.Date(
-        string="Enrollment Start Date", required=True, default=fields.Date.today
-    )
-    enrollment_end_date = fields.Date(
-        string="Enrollment End Date", required=True, default=lambda self: date.today() + timedelta(days=30)
-    )
-    disbursement_start_date = fields.Date(
-        string="Disbursement Start Date", required=True
-    )
-    disbursement_end_date = fields.Date(
-        string="Disbursement End Date", required=True
-    )
+
+    # Date fields made optional (no longer required)
+    enrollment_start_date = fields.Date(string="Enrollment Start Date")
+    enrollment_end_date = fields.Date(string="Enrollment End Date")
+    disbursement_start_date = fields.Date(string="Disbursement Start Date")
+    disbursement_end_date = fields.Date(string="Disbursement End Date")
+
+    # Deprecated: kept for backward compatibility
     approved_for_enrollment = fields.Boolean(string="Approved for Enrollment", default=False)
+
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
+
+    # WIP and count computed fields
+    wip_list_id = fields.Many2one(
+        "g2p.beneficiary.list",
+        string="WIP List",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    wip_stage_name = fields.Char(
+        string="Current Stage",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    list_count = fields.Integer(
+        string="# Lists",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    approved_count = fields.Integer(
+        string="# Approved",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    pending_count = fields.Integer(
+        string="# Pending",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    has_wip_list = fields.Boolean(
+        string="Has WIP List",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
 
     _sql_constraints = [
         (
@@ -41,6 +72,19 @@ class G2PEnrollmentCycle(models.Model):
         for rec in self:
             rec.is_readonly = self.env.context.get('enrollment_cycle_form_view', True)
 
+    @api.depends("beneficiary_list_ids.workflow_approval_status", "beneficiary_list_ids.current_stage_name")
+    def _compute_wip_and_counts(self):
+        for rec in self:
+            lists = rec.beneficiary_list_ids
+            rec.list_count = len(lists)
+            rec.approved_count = len(lists.filtered(lambda l: l.workflow_approval_status == "APPROVED"))
+            pending_lists = lists.filtered(lambda l: l.workflow_approval_status == "PENDING")
+            rec.pending_count = len(pending_lists)
+            wip = pending_lists[:1]
+            rec.wip_list_id = wip or False
+            rec.wip_stage_name = wip.current_stage_name if wip else False
+            rec.has_wip_list = bool(wip)
+
     @api.onchange('cycle_number')
     def _compute_cycle_mnemonic(self):
         for rec in self:
@@ -52,12 +96,20 @@ class G2PEnrollmentCycle(models.Model):
         last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
         return last.cycle_number + 1 if last else 1
 
-    def action_refresh_data(self):
-        """Force refresh of data from database"""
+    def _check_wip_list(self):
+        """Raise if a WIP list already exists for this cycle."""
         self.ensure_one()
-        # Clear cache to force fresh database reads
+        wip = self.beneficiary_list_ids.filtered(
+            lambda l: l.workflow_approval_status == "PENDING"
+        )
+        if wip:
+            raise UserError(
+                "A list is already in progress (%s). Complete or reject it before creating a new one." % wip[0].mnemonic
+            )
+
+    def action_refresh_data(self):
+        self.ensure_one()
         self._invalidate_cache()
-        # Re-read from database
         self.invalidate_recordset()
         return True
 
@@ -69,5 +121,5 @@ class G2PEnrollmentCycle(models.Model):
             "res_id": self.id,
             "view_mode": "form",
             "target": "current",
-            'context':{'create': False, 'enrollment_cycle_form_view':True},
+            'context': {'create': False, 'enrollment_cycle_form_view': True},
         }

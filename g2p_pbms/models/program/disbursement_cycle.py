@@ -1,6 +1,8 @@
 from odoo import models, fields, api
 from dateutil.relativedelta import relativedelta
+from odoo.exceptions import UserError
 import datetime
+
 
 class G2PDisbursementCycle(models.Model):
     _name = "g2p.disbursement.cycle"
@@ -69,6 +71,62 @@ class G2PDisbursementCycle(models.Model):
     )
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
 
+    # WIP and count computed fields
+    wip_list_id = fields.Many2one(
+        "g2p.beneficiary.list",
+        string="WIP List",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    wip_stage_name = fields.Char(
+        string="Current Stage",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    list_count = fields.Integer(
+        string="# Lists",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    approved_count = fields.Integer(
+        string="# Approved",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    pending_count = fields.Integer(
+        string="# Pending",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+    has_wip_list = fields.Boolean(
+        string="Has WIP List",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
+
+    @api.depends("beneficiary_list_ids.workflow_approval_status", "beneficiary_list_ids.current_stage_name")
+    def _compute_wip_and_counts(self):
+        for rec in self:
+            lists = rec.beneficiary_list_ids
+            rec.list_count = len(lists)
+            rec.approved_count = len(lists.filtered(lambda l: l.workflow_approval_status == "APPROVED"))
+            pending_lists = lists.filtered(lambda l: l.workflow_approval_status == "PENDING")
+            rec.pending_count = len(pending_lists)
+            wip = pending_lists[:1]
+            rec.wip_list_id = wip or False
+            rec.wip_stage_name = wip.current_stage_name if wip else False
+            rec.has_wip_list = bool(wip)
+
+    def _check_wip_list(self):
+        """Raise if a WIP list already exists for this cycle."""
+        self.ensure_one()
+        wip = self.beneficiary_list_ids.filtered(
+            lambda l: l.workflow_approval_status == "PENDING"
+        )
+        if wip:
+            raise UserError(
+                "A list is already in progress (%s). Complete or reject it before creating a new one." % wip[0].mnemonic
+            )
 
     @api.depends_context('disbursement_cycle_form_view')
     def _compute_is_readonly(self):

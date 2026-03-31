@@ -138,8 +138,8 @@
               </group>
             </page>
 
-            <!-- Verifications -->
-            <page string="Verifications">
+            <!-- Approvals -->
+            <!-- <page string="Verifications">
               <field name="verification_ids" readonly="1" nolabel="1">
                 <tree>
                   <field name="verified_by"/>
@@ -148,7 +148,7 @@
                   <field name="data" widget="download_binary" filename="data_filename"/>
                 </tree>
               </field>
-            </page>
+            </page> -->
 
             <!-- Approval Log: stage history of the current list -->
             <page string="Approval Log">

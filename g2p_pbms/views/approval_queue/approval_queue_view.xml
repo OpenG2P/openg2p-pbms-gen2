@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ================================================================
-         Approval Queue — replaces the blank OWL client action
+         Approval Queue
          Model: g2p.workflow.pending.stage
     ================================================================ -->
 

@@ -131,7 +131,7 @@
             </page>
             <!-- Enrolment Workflow Page -->
             <page string="Enrolment Workflow">
-              <field name="workflow_stage_ids" nolabel="1" domain="[('cycle_type', '=', 'ENROLMENT')]" context="{'default_program_id': id, 'default_cycle_type': 'ENROLMENT'}" options="{'no_quick_create': True}">
+              <field name="enrollment_workflow_stage_ids" nolabel="1" context="{'default_program_id': id, 'default_cycle_type': 'ENROLMENT'}" options="{'no_quick_create': True}">
                 <tree string="Enrolment Workflow Stages" default_order="stage_number">
                   <control>
                     <create string="Add New Stage"/>
@@ -144,7 +144,7 @@
             </page>
             <!-- Disbursement Workflow Page -->
             <page string="Disbursement Workflow">
-              <field name="workflow_stage_ids" nolabel="1" domain="[('cycle_type', '=', 'DISBURSEMENT')]" context="{'default_program_id': id, 'default_cycle_type': 'DISBURSEMENT'}" options="{'no_quick_create': True}">
+              <field name="disbursement_workflow_stage_ids" nolabel="1" context="{'default_program_id': id, 'default_cycle_type': 'DISBURSEMENT'}" options="{'no_quick_create': True}">
                 <tree string="Disbursement Workflow Stages" default_order="stage_number">
                   <control>
                     <create string="Add New Stage"/>

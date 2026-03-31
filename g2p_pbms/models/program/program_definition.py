@@ -56,6 +56,18 @@ class G2PProgramDefinition(models.Model):
         "program_id",
         string="Approval Workflow Stages",
     )
+    enrollment_workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Enrolment Workflow Stages",
+        domain=[("cycle_type", "=", "ENROLMENT")],
+    )
+    disbursement_workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Disbursement Workflow Stages",
+        domain=[("cycle_type", "=", "DISBURSEMENT")],
+    )
     service_providers_required = fields.Boolean(
         string="Service Providers required",
         default=True,

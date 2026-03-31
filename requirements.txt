@@ -1,0 +1,1 @@
+git+https://github.com/openg2p/openg2p-fastapi-common@v1.1.5#subdirectory=openg2p-fastapi-common

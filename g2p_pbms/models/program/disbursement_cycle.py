@@ -10,8 +10,56 @@ class G2PDisbursementCycle(models.Model):
     _rec_name = "cycle_mnemonic"
 
     cycle_mnemonic = fields.Char(string="Cycle Mnemonic", required=True)
+    cycle_number = fields.Integer(string="Cycle Sequence", default=0)
+    cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
     bridge_envelope_id = fields.Char(string='Bridge Envelope ID')
     program_id = fields.Many2one("g2p.program.definition", string="G2P Program")
+    current_list_id = fields.Many2one(
+        "g2p.beneficiary.list",
+        string="Current List",
+        compute="_compute_current_list",
+        store=True,
+    )
+    number_of_lists = fields.Integer(
+        string="Number of Lists",
+        compute="_compute_number_of_lists",
+        store=True,
+    )
+
+    # Derived from current_list_id for display
+    current_disbursement_display = fields.Char(
+        string="Disbursement", compute="_compute_from_current_list", store=True
+    )
+    current_stage_display = fields.Char(
+        string="Stage", compute="_compute_from_current_list", store=True
+    )
+    current_beneficiary_count = fields.Integer(
+        string="# of Beneficiaries", compute="_compute_from_current_list", store=True
+    )
+    current_approval_status = fields.Selection(
+        [("PENDING", "Pending"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")],
+        string="Status", compute="_compute_from_current_list", store=True,
+    )
+    current_acted_at = fields.Datetime(
+        string="Acted On", compute="_compute_from_current_list", store=True
+    )
+    current_enqueued_at = fields.Datetime(
+        string="Enqueued On", compute="_compute_from_current_list", store=True
+    )
+    current_acted_by = fields.Many2one(
+        "res.users", string="Acted By", compute="_compute_from_current_list", store=True
+    )
+    can_create_list = fields.Boolean(
+        compute="_compute_from_current_list", store=False
+    )
+    cycle_approved = fields.Boolean(
+        string="Cycle Approved", compute="_compute_from_current_list", store=True
+    )
+    current_stage_history_ids = fields.Many2many(
+        "g2p.workflow.stage.history",
+        compute="_compute_current_stage_history_ids",
+        string="Approval Log",
+    )
     target_registry = fields.Selection(related="program_id.target_registry", string="Target Registry Type")
     priority_rule_ids = fields.One2many(
         "g2p.priority.rule.definition", 
@@ -104,6 +152,68 @@ class G2PDisbursementCycle(models.Model):
         store=False,
     )
 
+    @api.depends('cycle_number')
+    def _compute_cycle_name(self):
+        for rec in self:
+            rec.cycle_name = "Cycle %s" % rec.cycle_number if rec.cycle_number else ""
+
+    @api.depends('beneficiary_list_ids.creation_date')
+    def _compute_current_list(self):
+        for rec in self:
+            lists = rec.beneficiary_list_ids.sorted('creation_date', reverse=True)
+            rec.current_list_id = lists[:1] or False
+
+    @api.depends('beneficiary_list_ids')
+    def _compute_number_of_lists(self):
+        for rec in self:
+            rec.number_of_lists = len(rec.beneficiary_list_ids)
+
+    @api.depends(
+        'current_list_id.workflow_approval_status',
+        'current_list_id.current_stage_name',
+        'current_list_id.number_of_registrants',
+        'current_list_id.latest_stage_history_id.stage_name',
+        'current_list_id.latest_stage_history_id.acted_at',
+        'current_list_id.latest_stage_history_id.acted_by',
+        'current_list_id.pending_stage_ids.enqueued_at',
+        'current_list_id.disbursement_quantity_display',
+    )
+    def _compute_from_current_list(self):
+        for rec in self:
+            lst = rec.current_list_id
+            if not lst:
+                rec.current_stage_display = False
+                rec.current_beneficiary_count = 0
+                rec.current_approval_status = False
+                rec.current_acted_at = False
+                rec.current_enqueued_at = False
+                rec.current_acted_by = False
+                rec.can_create_list = True
+                rec.cycle_approved = False
+                rec.current_disbursement_display = False
+                continue
+            rec.current_beneficiary_count = lst.number_of_registrants
+            rec.current_approval_status = lst.workflow_approval_status
+            history = lst.latest_stage_history_id
+            rec.current_acted_at = history.acted_at if history else False
+            rec.current_acted_by = history.acted_by if history else False
+            if lst.workflow_approval_status == 'PENDING':
+                pending = lst.pending_stage_ids[:1]
+                rec.current_stage_display = lst.current_stage_name
+                rec.current_enqueued_at = pending.enqueued_at if pending else False
+            else:
+                rec.current_stage_display = history.stage_name if history else False
+                rec.current_enqueued_at = history.enqueued_at if history else False
+            approved = lst.workflow_approval_status == 'APPROVED'
+            rec.can_create_list = lst.workflow_approval_status == 'REJECTED'
+            rec.cycle_approved = approved
+            rec.current_disbursement_display = lst.disbursement_quantity_display
+
+    @api.depends('current_list_id.stage_history_ids')
+    def _compute_current_stage_history_ids(self):
+        for rec in self:
+            rec.current_stage_history_ids = rec.current_list_id.stage_history_ids if rec.current_list_id else self.env["g2p.workflow.stage.history"]
+
     @api.depends("beneficiary_list_ids.workflow_approval_status", "beneficiary_list_ids.current_stage_name")
     def _compute_wip_and_counts(self):
         for rec in self:
@@ -193,13 +303,45 @@ class G2PDisbursementCycle(models.Model):
 
     @api.model
     def create(self, vals):
-        if not vals.get('disbursement_schedule_date') and vals.get('program_id'):
-            program = self.env['g2p.program.definition'].browse(vals['program_id'])
-            calculated_date = self._calculate_schedule_date(program)
-            if calculated_date:
-                vals['disbursement_schedule_date'] = calculated_date
-        return super(G2PDisbursementCycle, self).create(vals)
+        if vals.get('program_id'):
+            program_id = vals['program_id']
+            if not vals.get('cycle_number'):
+                last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
+                vals['cycle_number'] = (last.cycle_number or 0) + 1
+            if not vals.get('cycle_mnemonic'):
+                vals['cycle_mnemonic'] = "Cycle %s" % vals['cycle_number']
+            if not vals.get('disbursement_schedule_date'):
+                program = self.env['g2p.program.definition'].browse(program_id)
+                calculated_date = self._calculate_schedule_date(program)
+                if calculated_date:
+                    vals['disbursement_schedule_date'] = calculated_date
+        record = super(G2PDisbursementCycle, self).create(vals)
+        if record.program_id:
+            self.env["g2p.beneficiary.list"].create({
+                "disbursement_cycle_id": record.id,
+                "list_stage": "disbursement",
+                "mnemonic": "Version 1",
+            })
+        return record
     
+    def action_create_new_list(self):
+        self.ensure_one()
+        if self.cycle_approved:
+            raise UserError("This cycle has been approved and is locked. No further versions can be created.")
+        if not self.can_create_list:
+            raise UserError("Cannot create a new version while a list is in progress.")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Disbursement List",
+            "res_model": "g2p.beneficiary.list",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_disbursement_cycle_id": self.id,
+                "default_list_stage": "disbursement",
+            },
+        }
+
     def action_refresh_data(self):
         """Force refresh of data from database"""
         self.ensure_one()
@@ -210,6 +352,9 @@ class G2PDisbursementCycle(models.Model):
         return True
 
     def action_open_view(self):
+        self.ensure_one()
+        if self.current_list_id:
+            return self.current_list_id.action_open_summary_wizard()
         return {
             "type": "ir.actions.act_window",
             "name": "View Disbursement Cycle",

@@ -8,9 +8,55 @@ class G2PEnrollmentCycle(models.Model):
     _rec_name = "cycle_mnemonic"
 
     enrollment_cycle_id = fields.Char(string='Enrollment Cycle ID')
-    cycle_number = fields.Integer(string="Cycle Number", required=True, default=lambda self: self._get_default_cycle_number())
+    cycle_number = fields.Integer(string="Cycle Sequence", required=True, default=lambda self: self._get_default_cycle_number())
+    cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
     cycle_mnemonic = fields.Char(string="Enrollment Cycle Mnemonic", compute='_compute_cycle_mnemonic')
     program_id = fields.Many2one("g2p.program.definition", string="G2P Program", readonly=True)
+    creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
+
+    current_list_id = fields.Many2one(
+        "g2p.beneficiary.list",
+        string="Current List",
+        compute="_compute_current_list",
+        store=True,
+    )
+    number_of_lists = fields.Integer(
+        string="Number of Lists",
+        compute="_compute_number_of_lists",
+        store=True,
+    )
+
+    # Derived from current_list_id for display
+    current_stage_display = fields.Char(
+        string="Stage", compute="_compute_from_current_list", store=True
+    )
+    current_beneficiary_count = fields.Integer(
+        string="# of Beneficiaries", compute="_compute_from_current_list", store=True
+    )
+    current_approval_status = fields.Selection(
+        [("PENDING", "Pending"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")],
+        string="Status", compute="_compute_from_current_list", store=True,
+    )
+    current_acted_at = fields.Datetime(
+        string="Acted On", compute="_compute_from_current_list", store=True
+    )
+    current_enqueued_at = fields.Datetime(
+        string="Enqueued On", compute="_compute_from_current_list", store=True
+    )
+    current_acted_by = fields.Many2one(
+        "res.users", string="Acted By", compute="_compute_from_current_list", store=True
+    )
+    can_create_list = fields.Boolean(
+        compute="_compute_from_current_list", store=False
+    )
+    cycle_approved = fields.Boolean(
+        string="Cycle Approved", compute="_compute_from_current_list", store=True
+    )
+    current_stage_history_ids = fields.Many2many(
+        "g2p.workflow.stage.history",
+        compute="_compute_current_stage_history_ids",
+        string="Approval Log",
+    )
     beneficiary_list_ids = fields.One2many(
         "g2p.beneficiary.list", "enrollment_cycle_id", string="Beneficiary Lists"
     )
@@ -67,6 +113,65 @@ class G2PEnrollmentCycle(models.Model):
         ),
     ]
 
+    @api.depends('cycle_number')
+    def _compute_cycle_name(self):
+        for rec in self:
+            rec.cycle_name = "Cycle %s" % rec.cycle_number if rec.cycle_number else ""
+
+    @api.depends('beneficiary_list_ids.creation_date')
+    def _compute_current_list(self):
+        for rec in self:
+            lists = rec.beneficiary_list_ids.sorted('creation_date', reverse=True)
+            rec.current_list_id = lists[:1] or False
+
+    @api.depends('beneficiary_list_ids')
+    def _compute_number_of_lists(self):
+        for rec in self:
+            rec.number_of_lists = len(rec.beneficiary_list_ids)
+
+    @api.depends(
+        'current_list_id.workflow_approval_status',
+        'current_list_id.current_stage_name',
+        'current_list_id.number_of_registrants',
+        'current_list_id.latest_stage_history_id.stage_name',
+        'current_list_id.latest_stage_history_id.acted_at',
+        'current_list_id.latest_stage_history_id.acted_by',
+        'current_list_id.pending_stage_ids.enqueued_at',
+    )
+    def _compute_from_current_list(self):
+        for rec in self:
+            lst = rec.current_list_id
+            if not lst:
+                rec.current_stage_display = False
+                rec.current_beneficiary_count = 0
+                rec.current_approval_status = False
+                rec.current_acted_at = False
+                rec.current_enqueued_at = False
+                rec.current_acted_by = False
+                rec.can_create_list = True
+                rec.cycle_approved = False
+                continue
+            rec.current_beneficiary_count = lst.number_of_registrants
+            rec.current_approval_status = lst.workflow_approval_status
+            history = lst.latest_stage_history_id
+            rec.current_acted_at = history.acted_at if history else False
+            rec.current_acted_by = history.acted_by if history else False
+            if lst.workflow_approval_status == 'PENDING':
+                pending = lst.pending_stage_ids[:1]
+                rec.current_stage_display = lst.current_stage_name
+                rec.current_enqueued_at = pending.enqueued_at if pending else False
+            else:
+                rec.current_stage_display = history.stage_name if history else False
+                rec.current_enqueued_at = history.enqueued_at if history else False
+            approved = lst.workflow_approval_status == 'APPROVED'
+            rec.can_create_list = lst.workflow_approval_status == 'REJECTED'
+            rec.cycle_approved = approved
+
+    @api.depends('current_list_id.stage_history_ids')
+    def _compute_current_stage_history_ids(self):
+        for rec in self:
+            rec.current_stage_history_ids = rec.current_list_id.stage_history_ids if rec.current_list_id else self.env["g2p.workflow.stage.history"]
+
     @api.depends_context('enrollment_cycle_form_view')
     def _compute_is_readonly(self):
         for rec in self:
@@ -89,6 +194,18 @@ class G2PEnrollmentCycle(models.Model):
     def _compute_cycle_mnemonic(self):
         for rec in self:
             rec.cycle_mnemonic = "Enrollment Cycle %s" % rec.cycle_number
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.program_id:
+                self.env["g2p.beneficiary.list"].create({
+                    "enrollment_cycle_id": rec.id,
+                    "list_stage": "enrollment",
+                    "mnemonic": "Version 1",
+                })
+        return records
 
     @api.model
     def _get_default_cycle_number(self):
@@ -113,7 +230,28 @@ class G2PEnrollmentCycle(models.Model):
         self.invalidate_recordset()
         return True
 
+    def action_create_new_list(self):
+        self.ensure_one()
+        if self.cycle_approved:
+            raise UserError("This cycle has been approved and is locked. No further versions can be created.")
+        if not self.can_create_list:
+            raise UserError("Cannot create a new version while a list is in progress.")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Enrolment List",
+            "res_model": "g2p.beneficiary.list",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_enrollment_cycle_id": self.id,
+                "default_list_stage": "enrollment",
+            },
+        }
+
     def action_open_view(self):
+        self.ensure_one()
+        if self.current_list_id:
+            return self.current_list_id.action_open_summary_wizard()
         return {
             "type": "ir.actions.act_window",
             "name": "View Enrollment Cycle",

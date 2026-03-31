@@ -1,3 +1,4 @@
+import json
 import uuid
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -131,8 +132,51 @@ class G2PBeneficiaryList(models.Model):
         string="Community Verification",
     )
 
+    list_number = fields.Integer(string="List Number", readonly=True, default=0)
+    disbursement_quantity = fields.Char(
+        string="Disbursement Quantity (JSON)",
+        help="JSON string of disbursement quantities per benefit code.",
+    )
+    disbursement_quantity_display = fields.Char(
+        string="Disbursement",
+        compute="_compute_disbursement_quantity_display",
+        store=False,
+    )
+    latest_stage_history_id = fields.Many2one(
+        "g2p.workflow.stage.history",
+        string="Latest Stage History",
+        compute="_compute_latest_stage_history",
+        store=True,
+    )
+
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
     processed_date = fields.Datetime(string="Processed Date", default=None, readonly=True)
+
+    def _compute_disbursement_quantity_display(self):
+        for rec in self:
+            if not rec.disbursement_quantity:
+                rec.disbursement_quantity_display = False
+                continue
+            try:
+                data = json.loads(rec.disbursement_quantity)
+                if isinstance(data, list) and data:
+                    first = data[0]
+                    qty = first.get('quantity') or first.get('total_disbursement_quantity') or ''
+                    unit = first.get('unit') or first.get('measurement_unit') or ''
+                    rec.disbursement_quantity_display = "%s %s" % (qty, unit) if unit else str(qty)
+                elif isinstance(data, dict):
+                    items = list(data.values())
+                    rec.disbursement_quantity_display = str(items[0]) if items else False
+                else:
+                    rec.disbursement_quantity_display = str(data)
+            except Exception:
+                rec.disbursement_quantity_display = rec.disbursement_quantity
+
+    @api.depends('stage_history_ids.acted_at')
+    def _compute_latest_stage_history(self):
+        for rec in self:
+            history = rec.stage_history_ids.sorted('acted_at', reverse=True)
+            rec.latest_stage_history_id = history[:1] or False
 
     @api.depends("pending_stage_ids.current_stage_id")
     def _compute_current_stage_name(self):
@@ -159,6 +203,10 @@ class G2PBeneficiaryList(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for rec in records:
+            if rec.enrollment_cycle_id:
+                rec.list_number = self.search_count([('enrollment_cycle_id', '=', rec.enrollment_cycle_id.id)])
+            elif rec.disbursement_cycle_id:
+                rec.list_number = self.search_count([('disbursement_cycle_id', '=', rec.disbursement_cycle_id.id)])
             rec._initialize_workflow()
         return records
 
@@ -281,6 +329,8 @@ class G2PBeneficiaryList(models.Model):
                 })
 
         self.ensure_one()
+        cycle = self.enrollment_cycle_id or self.disbursement_cycle_id
+        latest_history = self.latest_stage_history_id
         wizard_vals = {
             "target_registry": self.program_id.target_registry,
             "mnemonic": self.mnemonic,
@@ -288,19 +338,29 @@ class G2PBeneficiaryList(models.Model):
             "program_id": self.program_id.id,
             "beneficiary_list_id": self.id,
             "beneficiary_list_uuid": self.beneficiary_list_id,
-            "enrollment_cycle_id": self.enrollment_cycle_id,
-            "disbursement_cycle_id": self.disbursement_cycle_id,
+            "enrollment_cycle_id": self.enrollment_cycle_id.id if self.enrollment_cycle_id else False,
+            "disbursement_cycle_id": self.disbursement_cycle_id.id if self.disbursement_cycle_id else False,
             "list_stage": self.list_stage,
             "list_workflow_status": self.list_workflow_status,
             "enrollment_start_date": self.enrollment_cycle_id.enrollment_start_date if self.enrollment_cycle_id else None,
             "enrollment_end_date": self.enrollment_cycle_id.enrollment_end_date if self.enrollment_cycle_id else None,
             "disbursement_cycle_mnemonic": self.disbursement_cycle_id.cycle_mnemonic if self.disbursement_cycle_id else None,
             "approved_for_disbursement": self.disbursement_cycle_id.approved_for_disbursement if self.disbursement_cycle_id else None,
+            # Cycle context for the unified view
+            "cycle_name": cycle.cycle_name if cycle else False,
+            "cycle_created_on": cycle.creation_date if cycle else False,
+            "cycle_created_by": cycle.create_uid.id if cycle else False,
+            "current_version": self.list_number,
+            "current_stage_display": self.current_stage_name if self.workflow_approval_status == 'PENDING' else (latest_history.stage_name if latest_history else False),
+            "current_approval_status": self.workflow_approval_status,
+            "current_acted_at": latest_history.acted_at if latest_history else False,
+            "current_acted_by": latest_history.acted_by.id if latest_history else False,
+            "can_create_list": self.workflow_approval_status == 'REJECTED',
         }
 
         wizard = self.env["g2p.bgtask.summary.wizard"].create(wizard_vals)
         return {
-            "name": "Eligibility Summary Details",
+            "name": cycle.cycle_name if cycle else "Beneficiary List",
             "view_mode": "form",
             "res_model": "g2p.bgtask.summary.wizard",
             "res_id": wizard.id,

@@ -1,9 +1,10 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class G2PWorkflowPendingStage(models.Model):
     _name = "g2p.workflow.pending.stage"
     _description = "G2P Workflow Pending Stage"
+    _order = "enqueued_at asc"
 
     list_id = fields.Many2one(
         "g2p.beneficiary.list",
@@ -22,6 +23,69 @@ class G2PWorkflowPendingStage(models.Model):
         [("PENDING", "Pending")], default="PENDING", string="Status"
     )
 
+    # --- Related fields for approval queue display ---
+    program_id = fields.Many2one(
+        "g2p.program.definition", related="list_id.program_id", store=True, string="Program"
+    )
+    program_mnemonic = fields.Char(
+        related="list_id.program_id.program_mnemonic", store=True, string="Program"
+    )
+    program_description = fields.Char(
+        related="list_id.program_id.description", store=True, string="Program Description"
+    )
+    list_stage = fields.Selection(
+        related="list_id.list_stage", store=True, string="Type"
+    )
+    list_number = fields.Integer(
+        related="list_id.list_number", store=True, string="Current Version"
+    )
+    number_of_registrants = fields.Integer(
+        related="list_id.number_of_registrants", store=True, string="# of Beneficiaries"
+    )
+    current_stage_name = fields.Char(
+        related="list_id.current_stage_name", string="Current Stage"
+    )
+    enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle", related="list_id.enrollment_cycle_id", store=True
+    )
+    disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle", related="list_id.disbursement_cycle_id", store=True
+    )
+
+    # --- Computed cycle info ---
+    cycle_name = fields.Char(
+        string="Cycle #", compute="_compute_cycle_info", store=True
+    )
+    cycle_created_on = fields.Datetime(
+        string="Cycle Created On", compute="_compute_cycle_info", store=True
+    )
+    cycle_created_by = fields.Many2one(
+        "res.users", string="Cycle Created By", compute="_compute_cycle_info", store=True
+    )
+
+    # --- History info ---
+    previous_stage_name = fields.Char(
+        string="Previous Stage", compute="_compute_history_info", store=True
+    )
+    approved_by = fields.Many2one(
+        "res.users", string="Approved By", compute="_compute_history_info", store=True
+    )
+    approved_at = fields.Datetime(
+        string="Approved On", compute="_compute_history_info", store=True
+    )
+
+    # --- Computed relational collections for detail view ---
+    stage_history_ids = fields.Many2many(
+        "g2p.workflow.stage.history",
+        compute="_compute_stage_history",
+        string="Approval Log",
+    )
+    previous_list_ids = fields.Many2many(
+        "g2p.beneficiary.list",
+        compute="_compute_previous_lists",
+        string="Previous Versions",
+    )
+
     _sql_constraints = [
         (
             "unique_list",
@@ -29,3 +93,94 @@ class G2PWorkflowPendingStage(models.Model):
             "Only one pending stage allowed per list.",
         )
     ]
+
+    @api.depends(
+        "list_id.enrollment_cycle_id.cycle_name",
+        "list_id.enrollment_cycle_id.creation_date",
+        "list_id.enrollment_cycle_id.create_uid",
+        "list_id.disbursement_cycle_id.cycle_name",
+        "list_id.disbursement_cycle_id.creation_date",
+        "list_id.disbursement_cycle_id.create_uid",
+    )
+    def _compute_cycle_info(self):
+        for rec in self:
+            cycle = rec.list_id.enrollment_cycle_id or rec.list_id.disbursement_cycle_id
+            rec.cycle_name = cycle.cycle_name if cycle else False
+            rec.cycle_created_on = cycle.creation_date if cycle else False
+            rec.cycle_created_by = cycle.create_uid if cycle else False
+
+    @api.depends("list_id.stage_history_ids.acted_at", "list_id.stage_history_ids.action_type")
+    def _compute_history_info(self):
+        for rec in self:
+            history = rec.list_id.stage_history_ids.sorted("acted_at", reverse=True)
+            # Previous stage = last acted stage (most recent)
+            rec.previous_stage_name = history[:1].stage_name if history else False
+            # Approved by/at = last APPROVED action
+            approved = history.filtered(lambda h: h.action_type == "APPROVED")[:1]
+            rec.approved_by = approved.acted_by if approved else False
+            rec.approved_at = approved.acted_at if approved else False
+
+    @api.depends("list_id.stage_history_ids")
+    def _compute_stage_history(self):
+        for rec in self:
+            rec.stage_history_ids = rec.list_id.stage_history_ids
+
+    @api.depends("list_id", "enrollment_cycle_id.beneficiary_list_ids", "disbursement_cycle_id.beneficiary_list_ids")
+    def _compute_previous_lists(self):
+        for rec in self:
+            cycle = rec.enrollment_cycle_id or rec.disbursement_cycle_id
+            if cycle:
+                rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.list_id.id)
+            else:
+                rec.previous_list_ids = self.env["g2p.beneficiary.list"]
+
+    @api.model
+    def _get_approval_queue_stage_ids(self):
+        """Return stage IDs that the current user can approve based on their groups."""
+        user_group_refs = set()
+        for group in self.env.user.groups_id:
+            # Build full XML ref: module.xml_id
+            imd = self.env['ir.model.data'].search([
+                ('model', '=', 'res.groups'),
+                ('res_id', '=', group.id),
+            ], limit=1)
+            if imd:
+                user_group_refs.add('%s.%s' % (imd.module, imd.name))
+
+        if not user_group_refs:
+            return []
+
+        # Find stages where at least one of the user's groups is in the roles CSV
+        all_stages = self.env['g2p.workflow.stage.definition'].search([])
+        matching_ids = []
+        for stage in all_stages:
+            if not stage.roles:
+                # No role restriction — any approver can act
+                matching_ids.append(stage.id)
+            else:
+                stage_roles = {r.strip() for r in stage.roles.split(',') if r.strip()}
+                if stage_roles & user_group_refs:
+                    matching_ids.append(stage.id)
+        return matching_ids
+
+    @api.model
+    def get_approval_queue_domain(self):
+        stage_ids = self._get_approval_queue_stage_ids()
+        if not stage_ids:
+            return [('id', '=', False)]
+        return [('current_stage_id', 'in', stage_ids)]
+
+    def action_approve(self):
+        self.ensure_one()
+        self.list_id.action_approve_stage()
+        return {"type": "ir.actions.client", "tag": "reload"}
+
+    def action_reject(self):
+        self.ensure_one()
+        self.list_id.action_reject_stage()
+        return {"type": "ir.actions.client", "tag": "reload"}
+
+    def action_open_list_detail(self):
+        """Open the beneficiary list summary wizard (Search / API response view)."""
+        self.ensure_one()
+        return self.list_id.action_open_summary_wizard()

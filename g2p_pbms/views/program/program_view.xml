@@ -129,14 +129,27 @@
             <page string="Entitlement Rules">
               <field name="entitlement_rule_ids" nolabel="1" options="{'no_quick_create': True}" context="{'default_target_registry': target_registry, 'default_allowed_benefit_code_ids': benefit_code_ids}"/>
             </page>
-            <!-- Approval Workflow Page -->
-            <page string="Approval Workflow">
-              <field name="workflow_stage_ids" nolabel="1" context="{'default_program_id': id}" options="{'no_quick_create': True}">
-                <tree string="Workflow Stages" default_order="cycle_type, stage_number">
+            <!-- Enrolment Workflow Page -->
+            <page string="Enrolment Workflow">
+              <field name="workflow_stage_ids" nolabel="1" domain="[('cycle_type', '=', 'ENROLMENT')]" context="{'default_program_id': id, 'default_cycle_type': 'ENROLMENT'}" options="{'no_quick_create': True}">
+                <tree string="Enrolment Workflow Stages" default_order="stage_number">
                   <control>
                     <create string="Add New Stage"/>
                   </control>
-                  <field name="cycle_type"/>
+                  <field name="cycle_type" column_invisible="1"/>
+                  <field name="stage_number"/>
+                  <field name="stage_name"/>
+                </tree>
+              </field>
+            </page>
+            <!-- Disbursement Workflow Page -->
+            <page string="Disbursement Workflow">
+              <field name="workflow_stage_ids" nolabel="1" domain="[('cycle_type', '=', 'DISBURSEMENT')]" context="{'default_program_id': id, 'default_cycle_type': 'DISBURSEMENT'}" options="{'no_quick_create': True}">
+                <tree string="Disbursement Workflow Stages" default_order="stage_number">
+                  <control>
+                    <create string="Add New Stage"/>
+                  </control>
+                  <field name="cycle_type" column_invisible="1"/>
                   <field name="stage_number"/>
                   <field name="stage_name"/>
                 </tree>
@@ -207,6 +220,120 @@
   <record id="action_g2p_programs_management_form" model="ir.actions.act_window.view">
     <field name="act_window_id" ref="action_g2p_programs_management"/>
     <field name="view_id" ref="view_g2p_programs_management_form"/>
+    <field name="view_mode">form</field>
+    <field name="sequence">2</field>
+  </record>
+
+  <!-- ============================================================
+       Enrolment Cycles navigation: Program list -> Cycle list
+  ============================================================ -->
+
+  <!-- Program list: just name, opens enrolment cycles form -->
+  <record id="view_g2p_programs_enrolment_cycles_tree" model="ir.ui.view">
+    <field name="name">g2p.programs.enrolment.cycles.tree</field>
+    <field name="model">g2p.program.definition</field>
+    <field name="arch" type="xml">
+      <tree string="Programs" create="0" delete="0" edit="0">
+        <field name="program_mnemonic" string="Program Name"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- Program "form" that shows only that program's enrolment cycles -->
+  <record id="view_g2p_program_enrolment_cycles_form" model="ir.ui.view">
+    <field name="name">g2p.program.enrolment.cycles.form</field>
+    <field name="model">g2p.program.definition</field>
+    <field name="arch" type="xml">
+      <form create="0" delete="0" edit="0" string="Enrolment Cycles">
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="program_mnemonic" readonly="1"/></h1>
+          </div>
+          <field name="enrollment_cycle_ids" nolabel="1">
+            <tree default_order="cycle_number desc" delete="false" create="false" edit="false">
+              <field name="cycle_mnemonic" string="Cycle"/>
+              <field name="list_count" string="# Lists"/>
+              <field name="wip_stage_name" string="Current Stage"/>
+              <button name="action_open_view" type="object" string="View" class="oe_link"/>
+            </tree>
+          </field>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action: Enrolment Cycles entry point (opens program list) -->
+  <record id="action_g2p_programs_enrolment_cycles" model="ir.actions.act_window">
+    <field name="name">Enrolment Cycles</field>
+    <field name="res_model">g2p.program.definition</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_g2p_programs_enrolment_cycles_tree_view" model="ir.actions.act_window.view">
+    <field name="act_window_id" ref="action_g2p_programs_enrolment_cycles"/>
+    <field name="view_id" ref="view_g2p_programs_enrolment_cycles_tree"/>
+    <field name="view_mode">tree</field>
+    <field name="sequence">1</field>
+  </record>
+  <record id="action_g2p_programs_enrolment_cycles_form_view" model="ir.actions.act_window.view">
+    <field name="act_window_id" ref="action_g2p_programs_enrolment_cycles"/>
+    <field name="view_id" ref="view_g2p_program_enrolment_cycles_form"/>
+    <field name="view_mode">form</field>
+    <field name="sequence">2</field>
+  </record>
+
+  <!-- ============================================================
+       Disbursement Cycles navigation: Program list -> Cycle list
+  ============================================================ -->
+
+  <!-- Program list: just name, opens disbursement cycles form -->
+  <record id="view_g2p_programs_disbursement_cycles_tree" model="ir.ui.view">
+    <field name="name">g2p.programs.disbursement.cycles.tree</field>
+    <field name="model">g2p.program.definition</field>
+    <field name="arch" type="xml">
+      <tree string="Programs" create="0" delete="0" edit="0">
+        <field name="program_mnemonic" string="Program Name"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- Program "form" that shows only that program's disbursement cycles -->
+  <record id="view_g2p_program_disbursement_cycles_form" model="ir.ui.view">
+    <field name="name">g2p.program.disbursement.cycles.form</field>
+    <field name="model">g2p.program.definition</field>
+    <field name="arch" type="xml">
+      <form create="0" delete="0" edit="0" string="Disbursement Cycles">
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="program_mnemonic" readonly="1"/></h1>
+          </div>
+          <field name="disbursement_cycle_ids" nolabel="1">
+            <tree default_order="cycle_mnemonic" delete="false" create="false" edit="false">
+              <field name="cycle_mnemonic" string="Cycle"/>
+              <field name="list_count" string="# Lists"/>
+              <field name="wip_stage_name" string="Current Stage"/>
+              <button name="action_open_view" type="object" string="View" class="oe_link"/>
+            </tree>
+          </field>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action: Disbursement Cycles entry point (opens program list) -->
+  <record id="action_g2p_programs_disbursement_cycles" model="ir.actions.act_window">
+    <field name="name">Disbursement Cycles</field>
+    <field name="res_model">g2p.program.definition</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <record id="action_g2p_programs_disbursement_cycles_tree_view" model="ir.actions.act_window.view">
+    <field name="act_window_id" ref="action_g2p_programs_disbursement_cycles"/>
+    <field name="view_id" ref="view_g2p_programs_disbursement_cycles_tree"/>
+    <field name="view_mode">tree</field>
+    <field name="sequence">1</field>
+  </record>
+  <record id="action_g2p_programs_disbursement_cycles_form_view" model="ir.actions.act_window.view">
+    <field name="act_window_id" ref="action_g2p_programs_disbursement_cycles"/>
+    <field name="view_id" ref="view_g2p_program_disbursement_cycles_form"/>
     <field name="view_mode">form</field>
     <field name="sequence">2</field>
   </record>

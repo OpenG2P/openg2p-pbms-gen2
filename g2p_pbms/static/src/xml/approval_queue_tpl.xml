@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="g2p_pbms.ApprovalQueue">
+        <div class="o_action o_approval_queue"/>
+    </t>
+</templates>

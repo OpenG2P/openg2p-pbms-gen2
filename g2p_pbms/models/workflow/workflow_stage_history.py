@@ -31,6 +31,7 @@ class G2PWorkflowStageHistory(models.Model):
         required=True,
         string="Action",
     )
+    reason = fields.Text(string="Reason")
 
     _sql_constraints = [
         (

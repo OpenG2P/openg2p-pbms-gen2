@@ -8,9 +8,9 @@
             <form string="Workflow Stage">
                 <sheet>
                     <group>
-                        <field name="cycle_type"/>
                         <field name="stage_number"/>
                         <field name="stage_name"/>
+                        <field name="roles" placeholder="e.g. g2p_pbms.group_enrolment_approver"/>
                     </group>
                 </sheet>
             </form>
@@ -22,10 +22,10 @@
         <field name="name">g2p.workflow.stage.definition.tree</field>
         <field name="model">g2p.workflow.stage.definition</field>
         <field name="arch" type="xml">
-            <tree string="Workflow Stages" default_order="cycle_type, stage_number">
-                <field name="cycle_type"/>
+            <tree string="Workflow Stages" default_order="stage_number">
                 <field name="stage_number"/>
                 <field name="stage_name"/>
+                <field name="roles" optional="show"/>
             </tree>
         </field>
     </record>

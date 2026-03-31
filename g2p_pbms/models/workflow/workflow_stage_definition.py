@@ -16,6 +16,12 @@ class G2PWorkflowStageDefinition(models.Model):
     )
     stage_number = fields.Integer(required=True, string="Stage Number")
     stage_name = fields.Char(required=True, string="Stage Name")
+    roles = fields.Char(
+        string="Roles",
+        help="Comma-separated Odoo group XML IDs that can approve this stage "
+             "(e.g. g2p_pbms.group_enrolment_approver). "
+             "Leave blank to allow any approver.",
+    )
     is_final_stage = fields.Boolean(
         compute="_compute_is_final_stage", store=True, string="Is Final Stage"
     )

@@ -31,6 +31,7 @@
         "views/res_config/res_config_view.xml",
         "views/g2p_bridge/disbursement_envelope_summary_report.xml",
         "views/g2p_bridge/disbursement_batch_summary_report.xml",
+        "views/approval_queue/approval_queue_view.xml",
         "views/menu.xml",
     ],
     "assets": {
@@ -39,6 +40,10 @@
             "/g2p_pbms/static/src/js/create_button.js",
             "/g2p_pbms/static/src/js/benefit_unit_widget.js",
             "/g2p_pbms/static/src/js/multiplier_widget.js",
+            "/g2p_pbms/static/src/js/approval_queue_action.js",
+            "/g2p_pbms/static/src/js/stage_history_widget.js",
+            "/g2p_pbms/static/src/xml/approval_queue_tpl.xml",
+            "/g2p_pbms/static/src/xml/stage_history_widget_tpl.xml",
             "/g2p_pbms/static/src/xml/create_button_tpl.xml",
             "/g2p_pbms/static/src/xml/benefit_unit_widget.xml",
             "/g2p_pbms/static/src/xml/multiplier_widget.xml",

@@ -4,54 +4,84 @@
         <field name="name">g2p.enrollment.cycle.form</field>
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
-            <form create="0" delete="0">
+            <form delete="0">
                 <header>
                     <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh" invisible="not id"/>
                 </header>
                 <sheet>
-                    <group colspan="2">
-                        <group string="Enrollment Cycle">
-                            <field name="is_readonly" invisible="1"/>
-                            <field name="has_wip_list" invisible="1"/>
-                            <field name="cycle_number" readonly="1"/>
-                            <field name="program_id" readonly="1"/>
+                    <!-- hidden helpers -->
+                    <field name="is_readonly" invisible="1"/>
+                    <field name="has_wip_list" invisible="1"/>
+                    <field name="can_create_list" invisible="1"/>
+                    <field name="current_list_id" invisible="1"/>
+
+                    <!-- only show on new record to set program -->
+                    <group invisible="id">
+                        <field name="program_id"/>
+                    </group>
+
+                    <!-- Summary info from latest list -->
+                    <group invisible="not id">
+                        <group>
+                            <field name="creation_date" string="Cycle Created On" readonly="1"/>
+                            <field name="create_uid" string="Cycle Created By" readonly="1"/>
                         </group>
-                        <group string="Summary">
-                            <field name="list_count" string="Total Lists" readonly="1"/>
-                            <field name="approved_count" string="Approved" readonly="1"/>
-                            <field name="pending_count" string="Pending" readonly="1"/>
-                            <field name="wip_stage_name" string="WIP Stage" readonly="1" invisible="not wip_stage_name"/>
+                        <group>
+                            <field name="current_stage_display" string="Current Stage" readonly="1"/>
+                            <field name="current_enqueued_at" string="Enqueued On" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
+                            <field name="number_of_lists" string="# of Versions" readonly="1"/>
                         </group>
                     </group>
-                    <notebook>
-                        <page string="Enrollment Lists" invisible="id == False">
-                            <field name="beneficiary_list_ids" nolabel="1">
-                                <tree default_order="creation_date desc" delete="false" limit="10">
-                                    <control>
-                                        <create string="Create New Enrollment List" invisible="parent.has_wip_list"/>
-                                    </control>
-                                    <field name="mnemonic" string="Mnemonic"/>
-                                    <field name="eligibility_process_status" string="Eligibility Status" widget="badge"/>
-                                    <field name="workflow_approval_status" string="Approval Status" widget="badge"/>
-                                    <field name="current_stage_name" string="Current Stage"/>
-                                    <field name="creation_date" string="Created On" readonly="1"/>
-                                    <field name="processed_date" string="Processed On" readonly="1"/>
-                                    <button name="action_approve_stage" type="object" string="Approve" class="btn-success"
-                                        invisible="workflow_approval_status != 'PENDING'"
-                                        groups="g2p_pbms.group_enrolment_approver"/>
-                                    <button name="action_reject_stage" type="object" string="Reject" class="btn-danger"
-                                        invisible="workflow_approval_status != 'PENDING'"
-                                        groups="g2p_pbms.group_enrolment_approver"/>
-                                    <button name="action_open_summary_wizard" type="object" string="View List" class="oe_link"
-                                        invisible="eligibility_process_status != 'complete'"/>
+
+                    <!-- Status row -->
+                    <group invisible="not id or not current_approval_status">
+                        <group>
+                            <field name="current_approval_status" string="Status" widget="badge" readonly="1"/>
+                        </group>
+                        <group invisible="current_approval_status != 'APPROVED'">
+                            <field name="current_acted_at" string="Approved On" readonly="1"/>
+                            <field name="current_acted_by" string="Approved By" readonly="1"/>
+                        </group>
+                        <group invisible="current_approval_status != 'REJECTED'">
+                            <field name="current_acted_at" string="Rejected On" readonly="1"/>
+                            <field name="current_acted_by" string="Rejected By" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook invisible="not id">
+                        <!-- Approval Log: stage history of current list -->
+                        <page string="Approval Log">
+                            <field name="current_stage_history_ids" readonly="1" nolabel="1">
+                                <tree create="0" delete="0" default_order="acted_at asc">
+                                    <field name="stage_number" string="Stage #"/>
+                                    <field name="stage_name" string="Stage"/>
+                                    <field name="enqueued_at" string="Enqueued At"/>
+                                    <field name="action_type" string="Action" widget="badge"
+                                           decoration-success="action_type == 'APPROVED'"
+                                           decoration-danger="action_type == 'REJECTED'"/>
+                                    <field name="reason" string="Reason"/>
+                                    <field name="acted_by" string="By"/>
+                                    <field name="acted_at" string="On"/>
                                 </tree>
                             </field>
                         </page>
-                        <page string="Stage History" invisible="id == False">
-                            <field name="beneficiary_list_ids" nolabel="1" readonly="1">
-                                <tree create="0" delete="0" default_order="creation_date desc" limit="10">
-                                    <field name="mnemonic" string="List"/>
-                                    <field name="stage_history_ids" string="History" widget="many2many_tags" readonly="1"/>
+
+                        <!-- Previous Versions: all lists except current, each with its history -->
+                        <page string="Previous Versions" invisible="number_of_lists &lt;= 1">
+                            <field name="beneficiary_list_ids" nolabel="1" readonly="1"
+                                   domain="[('id', '!=', current_list_id)]">
+                                <tree create="0" delete="0" default_order="list_number desc">
+                                    <field name="list_number" string="Version #"/>
+                                    <field name="mnemonic" string="Mnemonic"/>
+                                    <field name="workflow_approval_status" string="Status" widget="badge"
+                                           decoration-success="workflow_approval_status == 'APPROVED'"
+                                           decoration-danger="workflow_approval_status == 'REJECTED'"/>
+                                    <field name="number_of_registrants" string="# Beneficiaries"/>
+                                    <field name="creation_date" string="Created On" readonly="1"/>
+                                    <field name="stage_history_ids" string="Stage History" widget="many2many_tags" readonly="1"/>
                                 </tree>
                             </field>
                         </page>
@@ -62,9 +92,9 @@
     </record>
 
     <record id="action_enrollment_cycle" model="ir.actions.act_window">
-        <field name="name">Enrollment Cycle</field>
+        <field name="name">Enrolment Cycles</field>
         <field name="res_model">g2p.enrollment.cycle</field>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">tree,form</field>
         <field name="context">{}</field>
     </record>
 
@@ -74,14 +104,19 @@
         <field name="arch" type="xml">
             <tree default_order="cycle_number desc" delete="false">
                 <control>
-                    <create string="Create New Enrollment Cycle"/>
+                    <create string="Create New Enrolment Cycle"/>
                 </control>
-                <field name="cycle_number" string="Cycle Number"/>
-                <field name="list_count" string="# Lists"/>
-                <field name="approved_count" string="# Approved"/>
-                <field name="pending_count" string="# Pending"/>
-                <field name="wip_stage_name" string="WIP Stage"/>
-                <button name="action_open_view" type="object" string="View Enrollment Cycle" class="oe_link"/>
+                <field name="cycle_name" string="Cycle #"/>
+                <field name="program_id" string="Program" optional="show"/>
+                <field name="creation_date" string="Created On"/>
+                <field name="current_stage_display" string="Stage"/>
+                <field name="number_of_lists" string="# of Versions"/>
+                <field name="current_beneficiary_count" string="# of Beneficiaries"/>
+                <field name="current_approval_status" string="Stage Status" widget="badge"
+                       decoration-success="current_approval_status == 'APPROVED'"
+                       decoration-danger="current_approval_status == 'REJECTED'"
+                       decoration-warning="current_approval_status == 'PENDING'"/>
+                <field name="current_acted_at" string="Acted On"/>
             </tree>
         </field>
     </record>

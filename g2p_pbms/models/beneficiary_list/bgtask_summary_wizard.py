@@ -116,6 +116,49 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         compute="_compute_show_approve_disbursement_button",
     )
 
+    # --- Cycle context fields (populated from cycle when opened via action_open_view) ---
+    cycle_name = fields.Char(string="Cycle #")
+    cycle_created_on = fields.Datetime(string="Cycle Created On")
+    cycle_created_by = fields.Many2one("res.users", string="Cycle Created By")
+    current_version = fields.Integer(string="Current Version")
+    current_stage_display = fields.Char(string="Current Stage")
+    current_approval_status = fields.Selection(
+        [("PENDING", "Pending"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")],
+        string="Status",
+    )
+    current_acted_at = fields.Datetime(string="Acted On")
+    current_acted_by = fields.Many2one("res.users", string="Acted By")
+    can_create_list = fields.Boolean(string="Can Create Version", default=False)
+
+    # --- Approval Log: stage history of the current list ---
+    stage_history_ids = fields.Many2many(
+        "g2p.workflow.stage.history",
+        compute="_compute_workflow_data",
+        string="Approval Log",
+    )
+    # --- Previous Versions: other lists in the same cycle ---
+    previous_list_ids = fields.Many2many(
+        "g2p.beneficiary.list",
+        compute="_compute_workflow_data",
+        string="Previous Versions",
+    )
+
+    @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
+    def _compute_workflow_data(self):
+        BeneficiaryList = self.env["g2p.beneficiary.list"]
+        for rec in self:
+            lst = BeneficiaryList.browse(rec.beneficiary_list_id) if rec.beneficiary_list_id else BeneficiaryList
+            rec.stage_history_ids = lst.stage_history_ids if lst.exists() else self.env["g2p.workflow.stage.history"]
+            # Previous lists: all lists in the cycle except current
+            if rec.enrollment_cycle_id:
+                cycle = self.env["g2p.enrollment.cycle"].browse(rec.enrollment_cycle_id)
+                rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.beneficiary_list_id)
+            elif rec.disbursement_cycle_id:
+                cycle = self.env["g2p.disbursement.cycle"].browse(rec.disbursement_cycle_id)
+                rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.beneficiary_list_id)
+            else:
+                rec.previous_list_ids = BeneficiaryList
+
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):
         for rec in self:
@@ -315,12 +358,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             )
             payload = payload.model_dump(mode="json")
 
-            jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
-            headers = {
-                "content-type": "application/json",
-                "Signature": jwt_token
-            }
             try:
+                jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
+                headers = {
+                    "content-type": "application/json",
+                    "Signature": jwt_token
+                }
                 response = requests.post(endpoint, json=payload, headers=headers, timeout=10)
                 response.raise_for_status()
                 api_response = response.json()

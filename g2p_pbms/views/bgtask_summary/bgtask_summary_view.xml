@@ -8,28 +8,6 @@
         <header>
           <button name="action_refresh_data" type="object" string="Refresh Data"
                   class="btn-secondary" icon="fa-refresh" invisible="not id"/>
-          <!-- Enrolment approver actions -->
-          <button type="object" class="btn-primary" icon="fa-files-o"
-                  string="Add a Verification"
-                  name="action_record_verifications"
-                  invisible="not(list_stage == 'enrollment' and list_workflow_status == 'initiated')"
-                  groups="g2p_pbms.group_beneficiary_list_verifier"/>
-          <button type="object" class="btn-success" icon="fa-thumbs-o-up"
-                  name="action_approve_final_enrollment"
-                  invisible="not(show_approve_enrolment_button and list_stage == 'enrollment' and list_workflow_status == 'initiated')"
-                  string="Approve Final Enrollment"
-                  groups="g2p_pbms.group_enrolment_approver"/>
-          <!-- Disbursement approver actions -->
-          <button type="object" class="btn-primary" icon="fa-files-o"
-                  string="Add a Verification"
-                  name="action_record_verifications"
-                  invisible="not(list_stage == 'disbursement' and list_workflow_status == 'initiated')"
-                  groups="g2p_pbms.group_beneficiary_list_verifier"/>
-          <button type="object" class="btn-success" icon="fa-thumbs-o-up"
-                  name="action_approve_for_disbursement"
-                  invisible="not(show_approve_disbursement_button and list_stage == 'disbursement' and list_workflow_status == 'initiated')"
-                  string="Approve for Disbursement"
-                  groups="g2p_pbms.group_disbursement_approver"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->

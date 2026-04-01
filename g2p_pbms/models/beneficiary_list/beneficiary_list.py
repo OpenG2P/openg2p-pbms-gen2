@@ -331,6 +331,7 @@ class G2PBeneficiaryList(models.Model):
         self.ensure_one()
         cycle = self.enrollment_cycle_id or self.disbursement_cycle_id
         latest_history = self.latest_stage_history_id
+        pending = self.pending_stage_ids[:1]
         wizard_vals = {
             "target_registry": self.program_id.target_registry,
             "mnemonic": self.mnemonic,
@@ -356,6 +357,10 @@ class G2PBeneficiaryList(models.Model):
             "current_acted_at": latest_history.acted_at if latest_history else False,
             "current_acted_by": latest_history.acted_by.id if latest_history else False,
             "can_create_list": self.workflow_approval_status == 'REJECTED',
+            # New fields for workflow and beneficiaries section
+            "current_enqueued_at": pending.enqueued_at if pending else (latest_history.enqueued_at if latest_history else False),
+            "current_beneficiary_count": self.number_of_registrants,
+            "eligibility_process_status": self.eligibility_process_status,
         }
 
         wizard = self.env["g2p.bgtask.summary.wizard"].create(wizard_vals)

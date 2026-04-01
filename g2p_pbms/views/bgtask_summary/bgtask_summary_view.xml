@@ -8,6 +8,8 @@
         <header>
           <button name="action_refresh_data" type="object" string="Refresh Data"
                   class="btn-secondary" icon="fa-refresh" invisible="not id"/>
+          <button name="action_create_new_version" type="object" string="Create New Version"
+                  class="btn-primary" icon="fa-plus" invisible="not can_create_list"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->
@@ -26,10 +28,15 @@
               <field name="cycle_created_on" string="Created On" readonly="1"/>
               <field name="cycle_created_by" string="Created By" readonly="1"/>
             </group>
-            <group string="Current Version">
+            <group string="Workflow">
               <field name="current_version" string="Version #" readonly="1"/>
               <field name="current_stage_display" string="Stage" readonly="1"/>
               <field name="current_approval_status" string="Status" widget="badge" readonly="1"/>
+              <field name="current_enqueued_at" string="Queued On" readonly="1"/>
+            </group>
+            <group string="Beneficiaries">
+              <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
+              <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
             </group>
             <group string="Summary" invisible="current_approval_status == 'PENDING'">
               <field name="current_acted_at" string="Approved On" readonly="1"
@@ -146,7 +153,7 @@
             </page>
 
             <!-- Previous Versions: other lists in same cycle -->
-            <page string="Previous Versions" invisible="not previous_list_ids">
+            <page string="Previous Versions" invisible="not has_previous_versions">
               <field name="previous_list_ids" readonly="1" nolabel="1">
                 <tree create="0" delete="0" default_order="list_number desc">
                   <field name="list_number" string="Version #"/>

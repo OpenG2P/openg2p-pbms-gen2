@@ -128,6 +128,9 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     )
     current_acted_at = fields.Datetime(string="Acted On")
     current_acted_by = fields.Many2one("res.users", string="Acted By")
+    current_enqueued_at = fields.Datetime(string="Queued On")
+    current_beneficiary_count = fields.Integer(string="# of Beneficiaries")
+    eligibility_process_status = fields.Char(string="Resolution Status")
     can_create_list = fields.Boolean(string="Can Create Version", default=False)
 
     # --- Approval History: stage history of the current list ---
@@ -141,6 +144,10 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         "g2p.beneficiary.list",
         compute="_compute_workflow_data",
         string="Previous Versions",
+    )
+    has_previous_versions = fields.Boolean(
+        compute="_compute_workflow_data",
+        string="Has Previous Versions",
     )
 
     @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
@@ -158,6 +165,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.beneficiary_list_id)
             else:
                 rec.previous_list_ids = BeneficiaryList
+            rec.has_previous_versions = bool(rec.previous_list_ids)
 
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):
@@ -635,6 +643,18 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         # Re-read from database
         self.invalidate_recordset()
         return True
+
+    def action_create_new_version(self):
+        """Create a new version/list for the cycle"""
+        self.ensure_one()
+        if self.enrollment_cycle_id:
+            cycle = self.env["g2p.enrollment.cycle"].browse(self.enrollment_cycle_id)
+            return cycle.action_create_new_list()
+        elif self.disbursement_cycle_id:
+            cycle = self.env["g2p.disbursement.cycle"].browse(self.disbursement_cycle_id)
+            return cycle.action_create_new_list()
+        else:
+            raise UserError("No cycle associated with this wizard.")
 
     def action_record_verifications(self):
         allowed_group = 'g2p_pbms.group_beneficiary_list_verifier'

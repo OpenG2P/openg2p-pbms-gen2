@@ -20,6 +20,7 @@
           <field name="show_approve_disbursement_button" invisible="1"/>
           <field name="target_registry" invisible="1"/>
           <field name="can_create_list" invisible="1"/>
+          <field name="has_previous_versions" invisible="1"/>
 
           <!-- Cycle + List context header -->
           <group invisible="not cycle_name">

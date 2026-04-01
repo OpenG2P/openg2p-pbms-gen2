@@ -58,7 +58,7 @@ class G2PDisbursementCycle(models.Model):
     current_stage_history_ids = fields.Many2many(
         "g2p.workflow.stage.history",
         compute="_compute_current_stage_history_ids",
-        string="Approval Log",
+        string="Approval History",
     )
     target_registry = fields.Selection(related="program_id.target_registry", string="Target Registry Type")
     priority_rule_ids = fields.One2many(
@@ -353,6 +353,12 @@ class G2PDisbursementCycle(models.Model):
         # Re-read from database
         self.invalidate_recordset()
         return True
+
+    def get_formview_action(self, **kwargs):
+        """Override so that clicking a row in the tree view opens the same
+        view as the 'View' button (the bgtask summary wizard)."""
+        self.ensure_one()
+        return self.action_open_view()
 
     def action_open_view(self):
         self.ensure_one()

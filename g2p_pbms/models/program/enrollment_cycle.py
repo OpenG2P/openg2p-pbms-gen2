@@ -55,7 +55,7 @@ class G2PEnrollmentCycle(models.Model):
     current_stage_history_ids = fields.Many2many(
         "g2p.workflow.stage.history",
         compute="_compute_current_stage_history_ids",
-        string="Approval Log",
+        string="Approval History",
     )
     beneficiary_list_ids = fields.One2many(
         "g2p.beneficiary.list", "enrollment_cycle_id", string="Beneficiary Lists"
@@ -247,6 +247,12 @@ class G2PEnrollmentCycle(models.Model):
                 "default_list_stage": "enrollment",
             },
         }
+
+    def get_formview_action(self, **kwargs):
+        """Override so that clicking a row in the tree view opens the same
+        view as the 'View' button (the bgtask summary wizard)."""
+        self.ensure_one()
+        return self.action_open_view()
 
     def action_open_view(self):
         self.ensure_one()

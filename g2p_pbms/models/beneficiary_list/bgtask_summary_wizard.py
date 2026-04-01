@@ -130,11 +130,11 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     current_acted_by = fields.Many2one("res.users", string="Acted By")
     can_create_list = fields.Boolean(string="Can Create Version", default=False)
 
-    # --- Approval Log: stage history of the current list ---
+    # --- Approval History: stage history of the current list ---
     stage_history_ids = fields.Many2many(
         "g2p.workflow.stage.history",
         compute="_compute_workflow_data",
-        string="Approval Log",
+        string="Approval History",
     )
     # --- Previous Versions: other lists in the same cycle ---
     previous_list_ids = fields.Many2many(

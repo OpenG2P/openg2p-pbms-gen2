@@ -78,7 +78,7 @@ class G2PWorkflowPendingStage(models.Model):
     stage_history_ids = fields.Many2many(
         "g2p.workflow.stage.history",
         compute="_compute_stage_history",
-        string="Approval Log",
+        string="Approval History",
     )
     previous_list_ids = fields.Many2many(
         "g2p.beneficiary.list",

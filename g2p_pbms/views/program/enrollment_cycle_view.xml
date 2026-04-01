@@ -52,8 +52,8 @@
                     </group>
 
                     <notebook invisible="not id">
-                        <!-- Approval Log: stage history of current list -->
-                        <page string="Approval Log">
+                        <!-- Approval History: stage history of current list -->
+                        <page string="Approval History">
                             <field name="current_stage_history_ids" readonly="1" nolabel="1">
                                 <tree create="0" delete="0" default_order="acted_at asc">
                                     <field name="stage_number" string="Stage #"/>
@@ -81,7 +81,7 @@
                                            decoration-danger="workflow_approval_status == 'REJECTED'"/>
                                     <field name="number_of_registrants" string="# Beneficiaries"/>
                                     <field name="creation_date" string="Created On" readonly="1"/>
-                                    <field name="stage_history_ids" string="Stage History" widget="many2many_tags" readonly="1"/>
+                                    <field name="stage_history_ids" string="Stage History" widget="stage_history_widget" readonly="1"/>
                                 </tree>
                             </field>
                         </page>

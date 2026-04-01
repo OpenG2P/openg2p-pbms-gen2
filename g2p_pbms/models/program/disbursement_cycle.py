@@ -9,7 +9,7 @@ class G2PDisbursementCycle(models.Model):
     _description = "G2P Disbursement Cycle"
     _rec_name = "cycle_mnemonic"
 
-    cycle_mnemonic = fields.Char(string="Cycle Mnemonic")
+    cycle_mnemonic = fields.Char(string="Cycle Mnemonic", compute='_compute_cycle_mnemonic', store=True)
     cycle_number = fields.Integer(string="Cycle Sequence", default=0)
     cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
     bridge_envelope_id = fields.Char(string='Bridge Envelope ID')
@@ -156,6 +156,11 @@ class G2PDisbursementCycle(models.Model):
     def _compute_cycle_name(self):
         for rec in self:
             rec.cycle_name = "Cycle %s" % rec.cycle_number if rec.cycle_number else ""
+
+    @api.depends('cycle_number')
+    def _compute_cycle_mnemonic(self):
+        for rec in self:
+            rec.cycle_mnemonic = "Disbursement Cycle %s" % rec.cycle_number if rec.cycle_number else ""
 
     @api.depends('beneficiary_list_ids.creation_date')
     def _compute_current_list(self):
@@ -308,8 +313,6 @@ class G2PDisbursementCycle(models.Model):
             if not vals.get('cycle_number'):
                 last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
                 vals['cycle_number'] = (last.cycle_number or 0) + 1
-            if not vals.get('cycle_mnemonic'):
-                vals['cycle_mnemonic'] = "Cycle %s" % vals['cycle_number']
             if not vals.get('disbursement_schedule_date'):
                 program = self.env['g2p.program.definition'].browse(program_id)
                 calculated_date = self._calculate_schedule_date(program)

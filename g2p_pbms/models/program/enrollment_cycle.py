@@ -10,7 +10,7 @@ class G2PEnrollmentCycle(models.Model):
     enrollment_cycle_id = fields.Char(string='Enrollment Cycle ID')
     cycle_number = fields.Integer(string="Cycle Sequence", default=0)
     cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
-    cycle_mnemonic = fields.Char(string="Enrollment Cycle Mnemonic")
+    cycle_mnemonic = fields.Char(string="Enrollment Cycle Mnemonic", compute='_compute_cycle_mnemonic', store=True)
     program_id = fields.Many2one("g2p.program.definition", string="G2P Program")
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
 
@@ -118,6 +118,11 @@ class G2PEnrollmentCycle(models.Model):
         for rec in self:
             rec.cycle_name = "Cycle %s" % rec.cycle_number if rec.cycle_number else ""
 
+    @api.depends('cycle_number')
+    def _compute_cycle_mnemonic(self):
+        for rec in self:
+            rec.cycle_mnemonic = "Enrollment Cycle %s" % rec.cycle_number if rec.cycle_number else ""
+
     @api.depends('beneficiary_list_ids.creation_date')
     def _compute_current_list(self):
         for rec in self:
@@ -198,8 +203,6 @@ class G2PEnrollmentCycle(models.Model):
                 if not vals.get('cycle_number'):
                     last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
                     vals['cycle_number'] = (last.cycle_number or 0) + 1
-                if not vals.get('cycle_mnemonic'):
-                    vals['cycle_mnemonic'] = "Cycle %s" % vals['cycle_number']
         records = super().create(vals_list)
         for rec in records:
             if rec.program_id:

@@ -8,10 +8,10 @@ class G2PEnrollmentCycle(models.Model):
     _rec_name = "cycle_mnemonic"
 
     enrollment_cycle_id = fields.Char(string='Enrollment Cycle ID')
-    cycle_number = fields.Integer(string="Cycle Sequence", required=True, default=lambda self: self._get_default_cycle_number())
+    cycle_number = fields.Integer(string="Cycle Sequence", default=0)
     cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
-    cycle_mnemonic = fields.Char(string="Enrollment Cycle Mnemonic", compute='_compute_cycle_mnemonic')
-    program_id = fields.Many2one("g2p.program.definition", string="G2P Program", readonly=True)
+    cycle_mnemonic = fields.Char(string="Enrollment Cycle Mnemonic")
+    program_id = fields.Many2one("g2p.program.definition", string="G2P Program")
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
 
     current_list_id = fields.Many2one(
@@ -190,13 +190,16 @@ class G2PEnrollmentCycle(models.Model):
             rec.wip_stage_name = wip.current_stage_name if wip else False
             rec.has_wip_list = bool(wip)
 
-    @api.onchange('cycle_number')
-    def _compute_cycle_mnemonic(self):
-        for rec in self:
-            rec.cycle_mnemonic = "Enrollment Cycle %s" % rec.cycle_number
-
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('program_id'):
+                program_id = vals['program_id']
+                if not vals.get('cycle_number'):
+                    last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
+                    vals['cycle_number'] = (last.cycle_number or 0) + 1
+                if not vals.get('cycle_mnemonic'):
+                    vals['cycle_mnemonic'] = "Cycle %s" % vals['cycle_number']
         records = super().create(vals_list)
         for rec in records:
             if rec.program_id:
@@ -206,12 +209,6 @@ class G2PEnrollmentCycle(models.Model):
                     "mnemonic": "Version 1",
                 })
         return records
-
-    @api.model
-    def _get_default_cycle_number(self):
-        program_id = self.env.context.get('default_program_id')
-        last = self.search([('program_id', '=', program_id)], order='cycle_number desc', limit=1)
-        return last.cycle_number + 1 if last else 1
 
     def _check_wip_list(self):
         """Raise if a WIP list already exists for this cycle."""

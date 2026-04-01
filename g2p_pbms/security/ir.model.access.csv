@@ -23,6 +23,9 @@ g2p_administrative_area_large_write,Write Administrative Area Large,g2p_pbms.mod
 g2p_program_definition_read,Read Programs,g2p_pbms.model_g2p_program_definition,group_program_viewer,1,0,0,0
 g2p_program_definition_write,Write Programs,g2p_pbms.model_g2p_program_definition,group_program_editor,1,1,1,1
 
+g2p_program_metrics_read,Read Program Metrics,g2p_pbms.model_g2p_program_metrics,group_program_viewer,1,0,0,0
+g2p_program_metrics_write,Write Program Metrics,g2p_pbms.model_g2p_program_metrics,group_program_editor,1,1,1,1
+
 g2p_program_benefit_codes_read,Read Program Benefit Codes,g2p_pbms.model_g2p_program_benefit_codes,group_benefit_code_viewer,1,0,0,0
 g2p_program_benefit_codes_write,Write Program Benefit Codes,g2p_pbms.model_g2p_program_benefit_codes,group_benefit_code_editor,1,1,1,1
 

@@ -9,7 +9,7 @@ class G2PDisbursementCycle(models.Model):
     _description = "G2P Disbursement Cycle"
     _rec_name = "cycle_mnemonic"
 
-    cycle_mnemonic = fields.Char(string="Cycle Mnemonic", required=True)
+    cycle_mnemonic = fields.Char(string="Cycle Mnemonic")
     cycle_number = fields.Integer(string="Cycle Sequence", default=0)
     cycle_name = fields.Char(string="Cycle Number", compute='_compute_cycle_name', store=True)
     bridge_envelope_id = fields.Char(string='Bridge Envelope ID')

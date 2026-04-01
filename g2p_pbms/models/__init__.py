@@ -16,6 +16,7 @@ from .program import (
     G2PProgramDefinition,
     G2PDisbursementCycle,
     G2PEnrollmentCycle,
+    G2PProgramMetrics,
 )
 from .geography import (
     G2PAdministrativeAreaSmall,

@@ -2,22 +2,32 @@
 <templates xml:space="preserve">
     <t t-name="g2p_pbms.ApprovalsAction">
         <div class="o_action">
-            <div class="d-flex gap-2 p-2">
-                <button t-attf-class="btn btn-sm #{state.activeTab === 'queue' ? 'btn-primary' : 'btn-outline-primary'}"
-                        t-on-click="() => this.onTabClick('queue')">
-                    Approval Queue
-                </button>
-                <button t-attf-class="btn btn-sm #{state.activeTab === 'history' ? 'btn-primary' : 'btn-outline-primary'}"
-                        t-on-click="() => this.onTabClick('history')">
-                    Approval History
-                </button>
+            <div class="o_notebook">
+                <div class="o_notebook_headers">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link #{state.activeTab === 'queue' ? 'active' : ''}"
+                               href="#" t-on-click.prevent="() => this.onTabClick('queue')">
+                                Approval Queue
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link #{state.activeTab === 'history' ? 'active' : ''}"
+                               href="#" t-on-click.prevent="() => this.onTabClick('history')">
+                                Approval History
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <t t-if="state.activeTab === 'queue'">
+                        <View t-props="queueViewProps" t-key="'queue'"/>
+                    </t>
+                    <t t-if="state.activeTab === 'history'">
+                        <View t-props="historyViewProps" t-key="'history'"/>
+                    </t>
+                </div>
             </div>
-            <t t-if="state.activeTab === 'queue'">
-                <View t-props="queueViewProps" t-key="'queue'"/>
-            </t>
-            <t t-if="state.activeTab === 'history'">
-                <View t-props="historyViewProps" t-key="'history'"/>
-            </t>
         </div>
     </t>
 </templates>

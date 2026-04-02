@@ -248,6 +248,11 @@ class G2PEnrollmentCycle(models.Model):
             },
         }
 
+    def get_formview_action(self, **kwargs):
+        """Row click opens the same view as the View button."""
+        self.ensure_one()
+        return self.action_open_view()
+
     def action_open_view(self):
         self.ensure_one()
         if self.current_list_id:

@@ -110,7 +110,7 @@
         <field name="name">g2p.disbursement.cycle.tree</field>
         <field name="model">g2p.disbursement.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false">
+            <tree default_order="cycle_number desc" delete="false" open_form_view="false">
                 <control>
                     <create string="Create New Disbursement Cycle"/>
                 </control>
@@ -126,6 +126,7 @@
                        decoration-danger="current_approval_status == 'REJECTED'"
                        decoration-warning="current_approval_status == 'PENDING'"/>
                 <field name="current_acted_at" string="Acted On"/>
+                <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
         </field>
     </record>

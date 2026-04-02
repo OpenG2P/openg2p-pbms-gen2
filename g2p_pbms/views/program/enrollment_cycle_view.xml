@@ -103,7 +103,7 @@
         <field name="name">g2p.enrollment.cycle.tree</field>
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false" create="context.get('create', False)">
+            <tree default_order="cycle_number desc" delete="false" create="context.get('create', False)" open_form_view="false">
                 <control>
                     <create string="Create New Enrolment Cycle"/>
                 </control>
@@ -118,6 +118,7 @@
                        decoration-danger="current_approval_status == 'REJECTED'"
                        decoration-warning="current_approval_status == 'PENDING'"/>
                 <field name="current_acted_at" string="Acted On"/>
+                <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
         </field>
     </record>

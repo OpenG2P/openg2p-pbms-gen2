@@ -354,12 +354,6 @@ class G2PDisbursementCycle(models.Model):
         self.invalidate_recordset()
         return True
 
-    def get_formview_action(self, **kwargs):
-        """Override so that clicking a row in the tree view opens the same
-        view as the 'View' button (the bgtask summary wizard)."""
-        self.ensure_one()
-        return self.action_open_view()
-
     def action_open_view(self):
         self.ensure_one()
         if self.current_list_id:

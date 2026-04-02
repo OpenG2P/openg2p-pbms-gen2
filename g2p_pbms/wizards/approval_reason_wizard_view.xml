@@ -8,7 +8,7 @@
                 <group>
                     <field name="pending_stage_id" invisible="1"/>
                     <field name="action_type" invisible="1"/>
-                    <field name="reason" placeholder="Please provide a reason..."/>
+                    <field name="reason" required="1" placeholder="Please provide a reason..."/>
                 </group>
                 <footer>
                     <button name="action_confirm" type="object" string="Confirm"

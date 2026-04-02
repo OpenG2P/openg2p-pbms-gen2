@@ -15,7 +15,7 @@ class ApprovalReasonWizard(models.TransientModel):
         required=True,
         string="Action",
     )
-    reason = fields.Text(string="Reason", required=True)
+    reason = fields.Text(string="Reason")
 
     def action_confirm(self):
         self.ensure_one()

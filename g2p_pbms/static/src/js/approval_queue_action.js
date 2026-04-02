@@ -40,15 +40,6 @@ class ApprovalsAction extends Component {
             resModel: "g2p.workflow.pending.stage",
             domain: this.queueDomain,
             context: { approval_queue: true },
-            selectRecord: (resId) => {
-                this.env.services.action.doAction({
-                    type: "ir.actions.act_window",
-                    res_model: "g2p.workflow.pending.stage",
-                    res_id: resId,
-                    views: [[false, "form"]],
-                    target: "current",
-                });
-            },
         };
     }
 

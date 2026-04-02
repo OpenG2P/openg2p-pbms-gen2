@@ -6,6 +6,15 @@ class G2PWorkflowPendingStage(models.Model):
     _description = "G2P Workflow Pending Stage"
     _order = "enqueued_at asc"
 
+    def _compute_display_name(self):
+        for rec in self:
+            parts = [
+                rec.program_mnemonic or '',
+                rec.cycle_name or '',
+                rec.list_id.mnemonic or '',
+            ]
+            rec.display_name = ' / '.join(p for p in parts if p) or rec._description
+
     list_id = fields.Many2one(
         "g2p.beneficiary.list",
         required=True,
@@ -190,6 +199,16 @@ class G2PWorkflowPendingStage(models.Model):
             "res_id": wizard.id,
             "view_mode": "form",
             "target": "new",
+        }
+
+    def action_open_form(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "g2p.workflow.pending.stage",
+            "res_id": self.id,
+            "views": [[False, "form"]],
+            "target": "current",
         }
 
     def action_open_list_detail(self):

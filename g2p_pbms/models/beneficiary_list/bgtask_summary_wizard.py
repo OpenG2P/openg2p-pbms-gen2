@@ -133,6 +133,32 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     eligibility_process_status = fields.Char(string="Resolution Status")
     can_create_list = fields.Boolean(string="Can Create Version", default=False)
 
+    # --- Approval queue context ---
+    pending_stage_id = fields.Many2one("g2p.workflow.pending.stage", string="Pending Stage")
+    show_approval_buttons = fields.Boolean(
+        string="Show Approval Buttons",
+        compute="_compute_show_approval_buttons",
+    )
+
+    @api.depends("pending_stage_id", "current_approval_status")
+    def _compute_show_approval_buttons(self):
+        for rec in self:
+            rec.show_approval_buttons = bool(
+                rec.pending_stage_id and rec.current_approval_status == "PENDING"
+            )
+
+    def action_wizard_approve(self):
+        self.ensure_one()
+        if self.pending_stage_id:
+            return self.pending_stage_id.action_approve()
+        raise UserError("No pending stage associated.")
+
+    def action_wizard_reject(self):
+        self.ensure_one()
+        if self.pending_stage_id:
+            return self.pending_stage_id.action_reject()
+        raise UserError("No pending stage associated.")
+
     # --- Approval History: stage history of the current list ---
     stage_history_ids = fields.Many2many(
         "g2p.workflow.stage.history",

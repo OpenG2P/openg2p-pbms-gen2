@@ -203,13 +203,11 @@ class G2PWorkflowPendingStage(models.Model):
 
     def action_open_form(self):
         self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "res_model": "g2p.workflow.pending.stage",
-            "res_id": self.id,
-            "views": [[False, "form"]],
-            "target": "current",
-        }
+        action = self.list_id.action_open_summary_wizard()
+        # Set the pending stage on the wizard so approval buttons appear
+        wizard = self.env["g2p.bgtask.summary.wizard"].browse(action["res_id"])
+        wizard.write({"pending_stage_id": self.id})
+        return action
 
     def action_open_list_detail(self):
         """Open the beneficiary list summary wizard (Search / API response view)."""

@@ -96,7 +96,7 @@
         <field name="name">Enrolment Cycles</field>
         <field name="res_model">g2p.enrollment.cycle</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'group_by': ['program_id']}</field>
+        <field name="context">{}</field>
     </record>
 
     <record id="view_enrollment_cycle_tree" model="ir.ui.view">

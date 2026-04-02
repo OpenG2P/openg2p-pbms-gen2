@@ -383,7 +383,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             lines = []
             response_body = api_response.get('response_body', {})
             response_payload = response_body.get('response_payload', {})
-            summary = response_payload.get('summary', {})
+            summary = response_payload.get('summary')
+
+            # If summary is None or not a dict, skip processing
+            if not summary or not isinstance(summary, dict):
+                _logger.warning("Summary data is missing or invalid in API response")
+                return
 
             # Prepare benefit_code_id to mnemonic mapping
             benefit_code_obj = self.env['g2p.benefit.codes'].sudo()

@@ -241,7 +241,7 @@ class G2PBeneficiaryList(models.Model):
             })
             self.workflow_approval_status = "PENDING"
 
-    def action_approve_stage(self):
+    def action_approve_stage(self, reason=None):
         """Approve the current pending stage; advance to next or mark APPROVED."""
         self.ensure_one()
         pending = self.pending_stage_ids[:1]
@@ -263,6 +263,7 @@ class G2PBeneficiaryList(models.Model):
             "acted_by": self.env.user.id,
             "acted_at": fields.Datetime.now(),
             "status": "APPROVED",
+            "reason": reason,
         }
         if existing_history:
             existing_history.write(history_vals)
@@ -305,7 +306,7 @@ class G2PBeneficiaryList(models.Model):
                 pending.unlink()
                 self.workflow_approval_status = "APPROVED"
 
-    def action_reject_stage(self):
+    def action_reject_stage(self, reason=None):
         """Reject the current pending stage; mark list REJECTED."""
         self.ensure_one()
         pending = self.pending_stage_ids[:1]
@@ -327,6 +328,7 @@ class G2PBeneficiaryList(models.Model):
             "acted_by": self.env.user.id,
             "acted_at": fields.Datetime.now(),
             "status": "REJECTED",
+            "reason": reason,
         }
         if existing_history:
             existing_history.write(history_vals)

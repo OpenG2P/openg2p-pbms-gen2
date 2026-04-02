@@ -118,7 +118,6 @@
                        decoration-danger="current_approval_status == 'REJECTED'"
                        decoration-warning="current_approval_status == 'PENDING'"/>
                 <field name="current_acted_at" string="Acted On"/>
-                <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
         </field>
     </record>

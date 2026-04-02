@@ -13,7 +13,8 @@ class ApprovalsAction extends Component {
     setup() {
         this.rpc = useService("rpc");
         this.user = useService("user");
-        this.state = useState({ activeTab: "queue" });
+        const defaultTab = (this.props.action && this.props.action.params && this.props.action.params.default_tab) || "queue";
+        this.state = useState({ activeTab: defaultTab });
         this.queueDomain = [];
 
         onWillStart(async () => {

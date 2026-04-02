@@ -17,14 +17,14 @@ class StageHistoryPopover extends Component {
 class StageHistoryWidget extends Component {
     static template = "g2p_pbms.StageHistoryWidget";
     static props = { ...standardFieldProps };
-    static relatedFields = () => ({
-        stage_number: { type: "integer" },
-        stage_name: { type: "char" },
-        status: { type: "selection", selection: [] },
-        acted_by: { type: "many2one", relation: "res.users" },
-        acted_at: { type: "datetime" },
-        reason: { type: "text" },
-    });
+    static relatedFields = [
+        { name: "stage_number", type: "integer" },
+        { name: "stage_name", type: "char" },
+        { name: "status", type: "selection", selection: [] },
+        { name: "acted_by", type: "many2one", relation: "res.users" },
+        { name: "acted_at", type: "datetime" },
+        { name: "reason", type: "text" },
+    ];
 
     setup() {
         this._closeTimerId = null;

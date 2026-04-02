@@ -32,6 +32,7 @@
         "views/g2p_bridge/disbursement_envelope_summary_report.xml",
         "views/g2p_bridge/disbursement_batch_summary_report.xml",
         "views/approval_queue/approval_queue_view.xml",
+        "wizards/approval_reason_wizard_view.xml",
         "views/menu.xml",
     ],
     "assets": {

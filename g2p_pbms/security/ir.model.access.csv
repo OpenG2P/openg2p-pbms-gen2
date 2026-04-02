@@ -87,3 +87,6 @@ g2p_workflow_pending_stage_read,Read Workflow Pending Stage,g2p_pbms.model_g2p_w
 g2p_workflow_pending_stage_write_enrolment,Write Workflow Pending Stage Enrolment,g2p_pbms.model_g2p_workflow_pending_stage,group_enrolment_approver,1,1,1,1
 g2p_workflow_pending_stage_write_disbursement,Write Workflow Pending Stage Disbursement,g2p_pbms.model_g2p_workflow_pending_stage,group_disbursement_approver,1,1,1,1
 g2p_workflow_pending_stage_write_editor,Write Workflow Pending Stage Editor,g2p_pbms.model_g2p_workflow_pending_stage,group_beneficiary_list_editor,1,1,1,1
+
+g2p_approval_reason_wizard_enrolment,Approval Reason Wizard Enrolment,g2p_pbms.model_g2p_approval_reason_wizard,group_enrolment_approver,1,1,1,1
+g2p_approval_reason_wizard_disbursement,Approval Reason Wizard Disbursement,g2p_pbms.model_g2p_approval_reason_wizard,group_disbursement_approver,1,1,1,1

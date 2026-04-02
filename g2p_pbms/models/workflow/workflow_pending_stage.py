@@ -172,13 +172,25 @@ class G2PWorkflowPendingStage(models.Model):
 
     def action_approve(self):
         self.ensure_one()
-        self.list_id.action_approve_stage()
-        return {"type": "ir.actions.client", "tag": "reload"}
+        return self._open_reason_wizard("approve")
 
     def action_reject(self):
         self.ensure_one()
-        self.list_id.action_reject_stage()
-        return {"type": "ir.actions.client", "tag": "reload"}
+        return self._open_reason_wizard("reject")
+
+    def _open_reason_wizard(self, action_type):
+        wizard = self.env["g2p.approval.reason.wizard"].create({
+            "pending_stage_id": self.id,
+            "action_type": action_type,
+        })
+        return {
+            "name": "Approve" if action_type == "approve" else "Reject",
+            "type": "ir.actions.act_window",
+            "res_model": "g2p.approval.reason.wizard",
+            "res_id": wizard.id,
+            "view_mode": "form",
+            "target": "new",
+        }
 
     def action_open_list_detail(self):
         """Open the beneficiary list summary wizard (Search / API response view)."""

@@ -94,7 +94,6 @@
       <tree string="Programs" create="false" delete="false">
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_enrollment_cycle" string="Latest Cycle"/>
-        <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
       </tree>
     </field>
   </record>
@@ -267,7 +266,6 @@
               <field name="cycle_mnemonic" string="Cycle"/>
               <field name="list_count" string="# Lists"/>
               <field name="wip_stage_name" string="Current Stage"/>
-              <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
           </field>
         </sheet>
@@ -324,7 +322,6 @@
               <field name="cycle_mnemonic" string="Cycle"/>
               <field name="list_count" string="# Lists"/>
               <field name="wip_stage_name" string="Current Stage"/>
-              <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
           </field>
         </sheet>

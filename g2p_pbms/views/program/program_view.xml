@@ -7,6 +7,14 @@
     <field name="view_mode">tree,form</field>
   </record>
 
+  <!-- Action for Programs in Enrollment Cycles Menu -->
+  <record id="action_g2p_programs_enrollment" model="ir.actions.act_window">
+    <field name="name">Programs</field>
+    <field name="res_model">g2p.program.definition</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="view_g2p_programs_enrollment_tree"/>
+  </record>
+
   <!-- Program Form View -->
   <record id="view_g2p_programs_form" model="ir.ui.view">
     <field name="name">g2p.programs.form</field>
@@ -83,6 +91,22 @@
         <field name="program_status"/>
         <button name="action_view_enrollment_cycles" type="object" string="Enrolment Cycles" class="oe_link"/>
         <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_program_editor"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- Program Tree View for Enrollment Cycles Menu (no create button) -->
+  <record id="view_g2p_programs_enrollment_tree" model="ir.ui.view">
+    <field name="name">g2p.programs.enrollment.tree</field>
+    <field name="model">g2p.program.definition</field>
+    <field name="arch" type="xml">
+      <tree string="Programs" create="false" delete="false">
+        <field name="program_mnemonic" string="Program"/>
+        <field name="description"/>
+        <field name="target_registry"/>
+        <field name="program_status"/>
+        <field name="latest_enrollment_cycle" string="Latest Cycle"/>
+        <button name="action_view_enrollment_cycles" type="object" string="Enrolment Cycles" class="oe_link"/>
       </tree>
     </field>
   </record>

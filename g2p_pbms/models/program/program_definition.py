@@ -46,6 +46,11 @@ class G2PProgramDefinition(models.Model):
         "program_id",
         string="Enrollment Cycle",
     )
+    latest_enrollment_cycle = fields.Char(
+        string="Latest Enrollment Cycle",
+        compute="_compute_latest_enrollment_cycle",
+        store=False,
+    )
     disbursement_cycle_ids = fields.One2many(
         "g2p.disbursement.cycle",
         "program_id",
@@ -146,6 +151,12 @@ class G2PProgramDefinition(models.Model):
     def _compute_visibility_beneficiary(self):
         for rec in self:
             rec.show_label_for_beneficiary_list = rec.beneficiary_list == 'labeled'
+
+    @api.depends('enrollment_cycle_ids.cycle_number')
+    def _compute_latest_enrollment_cycle(self):
+        for rec in self:
+            latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_enrollment_cycle = latest.cycle_name if latest else ''
 
     @api.depends('entitlement_id')
     def _compute_entitlement_inline_ids(self):

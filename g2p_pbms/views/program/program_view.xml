@@ -7,14 +7,6 @@
     <field name="view_mode">tree,form</field>
   </record>
 
-  <!-- Action for Programs in Enrollment Cycles Menu -->
-  <record id="action_g2p_programs_enrollment" model="ir.actions.act_window">
-    <field name="name">Programs</field>
-    <field name="res_model">g2p.program.definition</field>
-    <field name="view_mode">tree</field>
-    <field name="view_id" ref="view_g2p_programs_enrollment_tree"/>
-  </record>
-
   <!-- Program Form View -->
   <record id="view_g2p_programs_form" model="ir.ui.view">
     <field name="name">g2p.programs.form</field>
@@ -361,6 +353,14 @@
     <field name="view_id" ref="view_g2p_program_disbursement_cycles_form"/>
     <field name="view_mode">form</field>
     <field name="sequence">2</field>
+  </record>
+
+  <!-- Action for Programs in Enrollment Cycles Menu -->
+  <record id="action_g2p_programs_enrollment" model="ir.actions.act_window">
+    <field name="name">Programs</field>
+    <field name="res_model">g2p.program.definition</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="view_g2p_programs_enrollment_tree"/>
   </record>
 
 </odoo>

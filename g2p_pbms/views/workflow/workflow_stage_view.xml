@@ -39,7 +39,10 @@
                 <field name="stage_number" string="Stage #"/>
                 <field name="stage_name" string="Stage"/>
                 <field name="list_type" string="Type"/>
-                <field name="action_type" string="Action" widget="badge"/>
+                <field name="status" string="Status" widget="badge"
+                       decoration-success="status == 'APPROVED'"
+                       decoration-danger="status == 'REJECTED'"
+                       decoration-warning="status == 'PENDING'"/>
                 <field name="acted_by" string="By"/>
                 <field name="acted_at" string="At"/>
             </tree>

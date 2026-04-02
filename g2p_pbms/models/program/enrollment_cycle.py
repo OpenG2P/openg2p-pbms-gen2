@@ -260,7 +260,7 @@ class G2PEnrollmentCycle(models.Model):
             return self.current_list_id.action_open_summary_wizard()
         return {
             "type": "ir.actions.act_window",
-            "name": "View Enrollment Cycle",
+            "name": "%s / %s" % (self.program_id.program_mnemonic, self.cycle_name) if self.program_id else self.cycle_mnemonic,
             "res_model": self._name,
             "res_id": self.id,
             "view_mode": "form",

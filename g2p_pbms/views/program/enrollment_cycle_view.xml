@@ -59,9 +59,10 @@
                                     <field name="stage_number" string="Stage #"/>
                                     <field name="stage_name" string="Stage"/>
                                     <field name="enqueued_at" string="Enqueued At"/>
-                                    <field name="action_type" string="Action" widget="badge"
-                                           decoration-success="action_type == 'APPROVED'"
-                                           decoration-danger="action_type == 'REJECTED'"/>
+                                    <field name="status" string="Status" widget="badge"
+                                           decoration-success="status == 'APPROVED'"
+                                           decoration-danger="status == 'REJECTED'"
+                                           decoration-warning="status == 'PENDING'"/>
                                     <field name="reason" string="Reason"/>
                                     <field name="acted_by" string="By"/>
                                     <field name="acted_at" string="On"/>
@@ -95,7 +96,7 @@
         <field name="name">Enrolment Cycles</field>
         <field name="res_model">g2p.enrollment.cycle</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{}</field>
+        <field name="context">{'group_by': ['program_id']}</field>
     </record>
 
     <record id="view_enrollment_cycle_tree" model="ir.ui.view">

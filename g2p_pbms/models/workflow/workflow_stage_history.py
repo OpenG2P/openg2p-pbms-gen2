@@ -26,10 +26,10 @@ class G2PWorkflowStageHistory(models.Model):
     enqueued_at = fields.Datetime(string="Enqueued At")
     acted_by = fields.Many2one("res.users", string="Acted By")
     acted_at = fields.Datetime(string="Acted At")
-    action_type = fields.Selection(
-        [("APPROVED", "Approved"), ("REJECTED", "Rejected")],
+    status = fields.Selection(
+        [("PENDING", "Pending"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")],
         required=True,
-        string="Action",
+        string="Status",
     )
     reason = fields.Text(string="Reason")
 

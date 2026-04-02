@@ -225,11 +225,19 @@ class G2PBeneficiaryList(models.Model):
             limit=1,
         )
         if first_stage:
+            now = fields.Datetime.now()
             self.env["g2p.workflow.pending.stage"].create({
                 "list_id": self.id,
                 "current_stage_id": first_stage.id,
-                "enqueued_at": fields.Datetime.now(),
+                "enqueued_at": now,
                 "stage_status": "PENDING",
+            })
+            self.env["g2p.workflow.stage.history"].sudo().create({
+                "list_id": self.id,
+                "list_type": cycle_type,
+                "stage_id": first_stage.id,
+                "enqueued_at": now,
+                "status": "PENDING",
             })
             self.workflow_approval_status = "PENDING"
 
@@ -245,15 +253,27 @@ class G2PBeneficiaryList(models.Model):
         current_stage = pending.current_stage_id
         list_type = "ENROLMENT" if self.list_stage == "enrollment" else "DISBURSEMENT"
 
-        self.env["g2p.workflow.stage.history"].create({
-            "list_id": self.id,
-            "list_type": list_type,
-            "stage_id": current_stage.id,
-            "enqueued_at": pending.enqueued_at,
+        # Update existing PENDING history record, or create if missing (backward compat)
+        existing_history = self.env["g2p.workflow.stage.history"].search([
+            ("list_id", "=", self.id),
+            ("stage_id", "=", current_stage.id),
+            ("status", "=", "PENDING"),
+        ], limit=1)
+        history_vals = {
             "acted_by": self.env.user.id,
             "acted_at": fields.Datetime.now(),
-            "action_type": "APPROVED",
-        })
+            "status": "APPROVED",
+        }
+        if existing_history:
+            existing_history.write(history_vals)
+        else:
+            self.env["g2p.workflow.stage.history"].create({
+                "list_id": self.id,
+                "list_type": list_type,
+                "stage_id": current_stage.id,
+                "enqueued_at": pending.enqueued_at,
+                **history_vals,
+            })
 
         if current_stage.is_final_stage:
             pending.unlink()
@@ -269,9 +289,17 @@ class G2PBeneficiaryList(models.Model):
                 limit=1,
             )
             if next_stage:
+                now = fields.Datetime.now()
                 pending.write({
                     "current_stage_id": next_stage.id,
-                    "enqueued_at": fields.Datetime.now(),
+                    "enqueued_at": now,
+                })
+                self.env["g2p.workflow.stage.history"].sudo().create({
+                    "list_id": self.id,
+                    "list_type": list_type,
+                    "stage_id": next_stage.id,
+                    "enqueued_at": now,
+                    "status": "PENDING",
                 })
             else:
                 pending.unlink()
@@ -289,15 +317,27 @@ class G2PBeneficiaryList(models.Model):
         current_stage = pending.current_stage_id
         list_type = "ENROLMENT" if self.list_stage == "enrollment" else "DISBURSEMENT"
 
-        self.env["g2p.workflow.stage.history"].create({
-            "list_id": self.id,
-            "list_type": list_type,
-            "stage_id": current_stage.id,
-            "enqueued_at": pending.enqueued_at,
+        # Update existing PENDING history record, or create if missing (backward compat)
+        existing_history = self.env["g2p.workflow.stage.history"].search([
+            ("list_id", "=", self.id),
+            ("stage_id", "=", current_stage.id),
+            ("status", "=", "PENDING"),
+        ], limit=1)
+        history_vals = {
             "acted_by": self.env.user.id,
             "acted_at": fields.Datetime.now(),
-            "action_type": "REJECTED",
-        })
+            "status": "REJECTED",
+        }
+        if existing_history:
+            existing_history.write(history_vals)
+        else:
+            self.env["g2p.workflow.stage.history"].create({
+                "list_id": self.id,
+                "list_type": list_type,
+                "stage_id": current_stage.id,
+                "enqueued_at": pending.enqueued_at,
+                **history_vals,
+            })
         pending.unlink()
         self.workflow_approval_status = "REJECTED"
 
@@ -365,7 +405,7 @@ class G2PBeneficiaryList(models.Model):
 
         wizard = self.env["g2p.bgtask.summary.wizard"].create(wizard_vals)
         return {
-            "name": cycle.cycle_name if cycle else "Beneficiary List",
+            "name": "%s / %s" % (self.program_id.program_mnemonic, cycle.cycle_name) if cycle else "Beneficiary List",
             "view_mode": "form",
             "res_model": "g2p.bgtask.summary.wizard",
             "res_id": wizard.id,

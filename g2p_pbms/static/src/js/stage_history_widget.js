@@ -20,7 +20,7 @@ class StageHistoryWidget extends Component {
     static relatedFields = () => ({
         stage_number: { type: "integer" },
         stage_name: { type: "char" },
-        action_type: { type: "selection", selection: [] },
+        status: { type: "selection", selection: [] },
         acted_by: { type: "many2one", relation: "res.users" },
         acted_at: { type: "datetime" },
         reason: { type: "text" },
@@ -41,7 +41,7 @@ class StageHistoryWidget extends Component {
         return list.records.map((r) => ({
             stage_number: r.data.stage_number || "",
             stage_name: r.data.stage_name || "",
-            action_type: r.data.action_type || "",
+            status: r.data.status || "",
             acted_by: Array.isArray(r.data.acted_by) ? r.data.acted_by[1] : "",
             acted_at: r.data.acted_at
                 ? r.data.acted_at.toFormat
@@ -61,8 +61,9 @@ class StageHistoryWidget extends Component {
         const stages = this.stages;
         if (!stages.length) return "badge text-bg-secondary";
         const last = stages[stages.length - 1];
-        if (last.action_type === "APPROVED") return "badge text-bg-success";
-        if (last.action_type === "REJECTED") return "badge text-bg-danger";
+        if (last.status === "APPROVED") return "badge text-bg-success";
+        if (last.status === "REJECTED") return "badge text-bg-danger";
+        if (last.status === "PENDING") return "badge text-bg-warning";
         return "badge text-bg-secondary";
     }
 

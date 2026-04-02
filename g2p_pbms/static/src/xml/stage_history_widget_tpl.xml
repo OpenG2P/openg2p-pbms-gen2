@@ -24,7 +24,7 @@
                     <tr>
                         <th style="width:36px">#</th>
                         <th>Stage</th>
-                        <th style="width:95px">Action</th>
+                        <th style="width:95px">Status</th>
                         <th>By</th>
                         <th style="width:90px">On</th>
                     </tr>
@@ -35,8 +35,8 @@
                             <td><t t-esc="stage.stage_number"/></td>
                             <td><t t-esc="stage.stage_name"/></td>
                             <td>
-                                <span t-attf-class="badge #{stage.action_type === 'APPROVED' ? 'text-bg-success' : 'text-bg-danger'}">
-                                    <t t-esc="stage.action_type"/>
+                                <span t-attf-class="badge #{stage.status === 'APPROVED' ? 'text-bg-success' : stage.status === 'REJECTED' ? 'text-bg-danger' : 'text-bg-warning'}">
+                                    <t t-esc="stage.status"/>
                                 </span>
                             </td>
                             <td><t t-esc="stage.acted_by"/></td>

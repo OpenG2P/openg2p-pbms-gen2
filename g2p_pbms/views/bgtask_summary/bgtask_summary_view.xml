@@ -23,33 +23,41 @@
           <field name="has_previous_versions" invisible="1"/>
 
           <!-- Cycle + List context header -->
-          <group invisible="not cycle_name">
-            <group string="Cycle">
-              <field name="cycle_name" string="Cycle #" readonly="1"/>
-              <field name="cycle_created_on" string="Created On" readonly="1"/>
-              <field name="cycle_created_by" string="Created By" readonly="1"/>
-            </group>
-            <group string="Workflow">
-              <field name="current_version" string="Version #" readonly="1"/>
-              <field name="current_stage_display" string="Stage" readonly="1"/>
-              <field name="current_approval_status" string="Status" widget="badge" readonly="1"/>
-              <field name="current_enqueued_at" string="Queued On" readonly="1"/>
-            </group>
-            <group string="Beneficiaries">
-              <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
-              <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
-            </group>
-            <group string="Summary" invisible="current_approval_status == 'PENDING'">
-              <field name="current_acted_at" string="Approved On" readonly="1"
-                     invisible="current_approval_status != 'APPROVED'"/>
-              <field name="current_acted_by" string="Approved By" readonly="1"
-                     invisible="current_approval_status != 'APPROVED'"/>
-              <field name="current_acted_at" string="Rejected On" readonly="1"
-                     invisible="current_approval_status != 'REJECTED'"/>
-              <field name="current_acted_by" string="Rejected By" readonly="1"
-                     invisible="current_approval_status != 'REJECTED'"/>
-            </group>
-          </group>
+          <div class="row" invisible="not cycle_name">
+            <div class="col-3">
+              <group string="Cycle">
+                <field name="cycle_name" string="Cycle #" readonly="1"/>
+                <field name="cycle_created_on" string="Created On" readonly="1"/>
+                <field name="cycle_created_by" string="Created By" readonly="1"/>
+              </group>
+            </div>
+            <div class="col-3">
+              <group string="Workflow">
+                <field name="current_version" string="Version #" readonly="1"/>
+                <field name="current_stage_display" string="Stage" readonly="1"/>
+                <field name="current_approval_status" string="Status" widget="badge" readonly="1"/>
+                <field name="current_enqueued_at" string="Queued On" readonly="1"/>
+              </group>
+            </div>
+            <div class="col-3">
+              <group string="Beneficiaries">
+                <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
+                <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
+              </group>
+            </div>
+            <div class="col-3" invisible="current_approval_status == 'PENDING'">
+              <group string="Summary">
+                <field name="current_acted_at" string="Approved On" readonly="1"
+                       invisible="current_approval_status != 'APPROVED'"/>
+                <field name="current_acted_by" string="Approved By" readonly="1"
+                       invisible="current_approval_status != 'APPROVED'"/>
+                <field name="current_acted_at" string="Rejected On" readonly="1"
+                       invisible="current_approval_status != 'REJECTED'"/>
+                <field name="current_acted_by" string="Rejected By" readonly="1"
+                       invisible="current_approval_status != 'REJECTED'"/>
+              </group>
+            </div>
+          </div>
 
           <!-- Beneficiary List Info (shown when opened standalone / without cycle context) -->
           <group invisible="cycle_name">
@@ -71,7 +79,7 @@
           <notebook>
             <!-- Statistics: eligibility/entitlement statistics from API -->
             <page string="Statistics">
-              <group>
+              <group invisible="list_stage == 'enrollment'">
                 <div style="white-space: nowrap; margin-bottom: 10px;">
                   <strong>
                     <field name="general_title" readonly="1" widget="handle_display"/>
@@ -100,7 +108,7 @@
                     </tree>
                   </field>
                 </group>
-                <group>
+                <group invisible="list_stage == 'enrollment'">
                   <div style="white-space: nowrap; margin-bottom: 10px;">
                     <strong>
                       <field name="entitlement_group_title" readonly="1" widget="handle_display"/>
@@ -143,9 +151,10 @@
                   <field name="stage_number" string="Stage #"/>
                   <field name="stage_name" string="Stage"/>
                   <field name="enqueued_at" string="Enqueued At"/>
-                  <field name="action_type" string="Action" widget="badge"
-                         decoration-success="action_type == 'APPROVED'"
-                         decoration-danger="action_type == 'REJECTED'"/>
+                  <field name="status" string="Status" widget="badge"
+                         decoration-success="status == 'APPROVED'"
+                         decoration-danger="status == 'REJECTED'"
+                         decoration-warning="status == 'PENDING'"/>
                   <field name="reason" string="Reason"/>
                   <field name="acted_by" string="By"/>
                   <field name="acted_at" string="On"/>

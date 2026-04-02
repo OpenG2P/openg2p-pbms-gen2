@@ -109,14 +109,14 @@ class G2PWorkflowPendingStage(models.Model):
             rec.cycle_created_on = cycle.creation_date if cycle else False
             rec.cycle_created_by = cycle.create_uid if cycle else False
 
-    @api.depends("list_id.stage_history_ids.acted_at", "list_id.stage_history_ids.action_type")
+    @api.depends("list_id.stage_history_ids.acted_at", "list_id.stage_history_ids.status")
     def _compute_history_info(self):
         for rec in self:
             history = rec.list_id.stage_history_ids.sorted("acted_at", reverse=True)
             # Previous stage = last acted stage (most recent)
             rec.previous_stage_name = history[:1].stage_name if history else False
             # Approved by/at = last APPROVED action
-            approved = history.filtered(lambda h: h.action_type == "APPROVED")[:1]
+            approved = history.filtered(lambda h: h.status == "APPROVED")[:1]
             rec.approved_by = approved.acted_by if approved else False
             rec.approved_at = approved.acted_at if approved else False
 

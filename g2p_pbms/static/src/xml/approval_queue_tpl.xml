@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates xml:space="preserve">
-    <t t-name="g2p_pbms.ApprovalQueue">
-        <div class="o_action o_approval_queue"/>
+    <t t-name="g2p_pbms.ApprovalsAction">
+        <div class="o_action">
+            <div class="d-flex gap-2 p-2">
+                <button t-attf-class="btn btn-sm #{state.activeTab === 'queue' ? 'btn-primary' : 'btn-outline-primary'}"
+                        t-on-click="() => this.onTabClick('queue')">
+                    Approval Queue
+                </button>
+                <button t-attf-class="btn btn-sm #{state.activeTab === 'history' ? 'btn-primary' : 'btn-outline-primary'}"
+                        t-on-click="() => this.onTabClick('history')">
+                    Approval History
+                </button>
+            </div>
+            <t t-if="state.activeTab === 'queue'">
+                <View t-props="queueViewProps" t-key="'queue'"/>
+            </t>
+            <t t-if="state.activeTab === 'history'">
+                <View t-props="historyViewProps" t-key="'history'"/>
+            </t>
+        </div>
     </t>
 </templates>

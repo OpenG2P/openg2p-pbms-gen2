@@ -27,6 +27,14 @@ class ApprovalsAction extends Component {
                     kwargs: {},
                 }
             );
+            // Resolve the tree view ID so the View component uses our custom tree
+            const result = await this.rpc("/web/dataset/call_kw/ir.model.data/check_object_reference", {
+                model: "ir.model.data",
+                method: "check_object_reference",
+                args: ["g2p_pbms", "view_g2p_approval_queue_tree"],
+                kwargs: {},
+            });
+            this.queueTreeViewId = result ? result[1] : false;
         });
     }
 
@@ -40,6 +48,10 @@ class ApprovalsAction extends Component {
             resModel: "g2p.workflow.pending.stage",
             domain: this.queueDomain,
             context: { approval_queue: true },
+            viewId: this.queueTreeViewId || false,
+            noContentHelp: "No pending approvals.",
+            allowSelectors: false,
+            selectRecord: () => {},
         };
     }
 

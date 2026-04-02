@@ -354,6 +354,7 @@
     <field name="res_model">g2p.program.definition</field>
     <field name="view_mode">tree</field>
     <field name="view_id" ref="view_g2p_programs_enrollment_tree"/>
+    <field name="context">{'enrollment_cycles_nav': True, 'create': False}</field>
   </record>
 
 </odoo>

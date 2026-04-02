@@ -199,3 +199,8 @@ class G2PProgramDefinition(models.Model):
             },
             'target': 'current',
         }
+
+    def get_formview_action(self, **kwargs):
+        if self.env.context.get('enrollment_cycles_nav'):
+            return self.action_view_enrollment_cycles()
+        return super().get_formview_action(**kwargs)

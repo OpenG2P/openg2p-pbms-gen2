@@ -91,9 +91,10 @@
     <field name="name">g2p.programs.enrollment.tree</field>
     <field name="model">g2p.program.definition</field>
     <field name="arch" type="xml">
-      <tree string="Programs" create="false" delete="false">
+      <tree string="Programs" create="0" delete="0" edit="0">
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_enrollment_cycle" string="Latest Cycle"/>
+        <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
       </tree>
     </field>
   </record>
@@ -354,7 +355,7 @@
     <field name="res_model">g2p.program.definition</field>
     <field name="view_mode">tree</field>
     <field name="view_id" ref="view_g2p_programs_enrollment_tree"/>
-    <field name="context">{'enrollment_cycles_nav': True, 'create': False}</field>
+    <field name="context">{'create': False}</field>
   </record>
 
 </odoo>

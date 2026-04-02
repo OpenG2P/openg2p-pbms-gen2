@@ -173,3 +173,18 @@ class G2PProgramDefinition(models.Model):
                 'program_view_mode': view_mode,
             },
         }
+
+    def action_view_enrollment_cycles(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': '%s - Enrolment Cycles' % self.program_mnemonic,
+            'res_model': 'g2p.enrollment.cycle',
+            'view_mode': 'tree,form',
+            'domain': [('program_id', '=', self.id)],
+            'context': {
+                'default_program_id': self.id,
+                'create': True,
+            },
+            'target': 'current',
+        }

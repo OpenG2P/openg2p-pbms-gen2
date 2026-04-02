@@ -4,7 +4,7 @@
         <field name="name">g2p.enrollment.cycle.form</field>
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
-            <form delete="0">
+            <form delete="0" create="context.get('create', False)">
                 <header>
                     <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh" invisible="not id"/>
                 </header>
@@ -103,7 +103,7 @@
         <field name="name">g2p.enrollment.cycle.tree</field>
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false">
+            <tree default_order="cycle_number desc" delete="false" create="context.get('create', False)">
                 <control>
                     <create string="Create New Enrolment Cycle"/>
                 </control>

@@ -81,6 +81,7 @@
         <field name="description"/>
         <field name="target_registry"/>
         <field name="program_status"/>
+        <button name="action_view_enrollment_cycles" type="object" string="Enrolment Cycles" class="oe_link"/>
         <button name="action_open_edit" type="object" class="fa fa-pencil" title="Edit" groups="g2p_pbms.group_program_editor"/>
       </tree>
     </field>

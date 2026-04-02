@@ -9,7 +9,7 @@
     <menuitem id="menu_g2p_programs" name="Programs" parent="menu_g2p_root" action="action_g2p_programs_config" sequence="2" groups="g2p_pbms.group_program_editor,g2p_pbms.group_program_viewer"/>
 
     <!-- Enrolment Cycles -->
-    <menuitem id="menu_g2p_enrollment_cycles" name="Enrolment Cycles" parent="menu_g2p_root" action="action_enrollment_cycle" sequence="3"/>
+    <menuitem id="menu_g2p_enrollment_cycles" name="Enrolment Cycles" parent="menu_g2p_root" action="action_g2p_programs" sequence="3"/>
 
     <!-- Disbursement Cycles -->
     <menuitem id="menu_g2p_disbursement_cycles" name="Disbursement Cycles" parent="menu_g2p_root" action="action_disbursement_cycle" sequence="4"/>

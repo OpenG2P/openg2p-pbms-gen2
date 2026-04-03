@@ -24,5 +24,5 @@
     <menuitem id="menu_g2p_administrative_area_small_action" name="Administrative Areas (Small)" parent="menu_g2p_master_data" action="action_g2p_administrative_area_small" sequence="6" groups="g2p_pbms.group_geography_viewer,g2p_pbms.group_geography_editor"/>
 
     <!-- Registry Models (hidden; child menus from g2p_registry_addon attach here) -->
-    <menuitem id="menu_g2p_registry" name="Registry Models" parent="menu_g2p_root" sequence="99" groups="base.group_no_one"/>
+    <menuitem id="menu_g2p_registry" name="Registry Models" parent="menu_g2p_root" sequence="99" groups="base.group_no_one" active="False"/>
 </odoo>

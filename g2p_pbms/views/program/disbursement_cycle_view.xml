@@ -82,8 +82,10 @@
                             <field name="beneficiary_list_ids" nolabel="1" readonly="1"
                                    domain="[('id', '!=', current_list_id)]">
                                 <tree create="0" delete="0" default_order="list_number desc">
-                                    <field name="list_number" string="Version #"/>
-                                    <field name="mnemonic" string="Mnemonic"/>
+                                    <field name="list_number" column_invisible="1"/>
+                                    <field name="mnemonic" string="Version"/>
+                                    <field name="brief_truncated" string="Brief" widget="char"/>
+                                    <field name="brief" column_invisible="1"/>
                                     <field name="workflow_approval_status" string="Status" widget="badge"
                                            decoration-success="workflow_approval_status == 'APPROVED'"
                                            decoration-danger="workflow_approval_status == 'REJECTED'"/>

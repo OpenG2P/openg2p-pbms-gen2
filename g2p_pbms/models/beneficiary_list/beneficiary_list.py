@@ -10,12 +10,13 @@ class G2PBeneficiaryList(models.Model):
     _rec_name = "mnemonic"
 
     beneficiary_list_id = fields.Char(string='Beneficiary List ID', readonly=True, required=True, default=lambda self: str(uuid.uuid4()))
-    mnemonic = fields.Char(string="Mnemonic", required=True)
+    mnemonic = fields.Char(string="Mnemonic")
     program_id = fields.Many2one("g2p.program.definition", string="G2P Program", compute="_compute_program_id", store=True, readonly=True)
     enrollment_cycle_id = fields.Many2one("g2p.enrollment.cycle", string="Enrollment Cycle", required=False)
     disbursement_cycle_id = fields.Many2one("g2p.disbursement.cycle", string="Disbursement Cycle", required=False)
 
     brief = fields.Text(string="Brief")
+    brief_truncated = fields.Char(string="Brief", compute="_compute_brief_truncated", store=False)
     eligibility_process_status = fields.Selection(
         [
             ("not_applicable", "not applicable"),
@@ -152,6 +153,13 @@ class G2PBeneficiaryList(models.Model):
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
     processed_date = fields.Datetime(string="Processed Date", default=None, readonly=True)
 
+    def _compute_brief_truncated(self):
+        for rec in self:
+            if rec.brief and len(rec.brief) > 50:
+                rec.brief_truncated = rec.brief[:50] + "..."
+            else:
+                rec.brief_truncated = rec.brief or ""
+
     def _compute_disbursement_quantity_display(self):
         for rec in self:
             if not rec.disbursement_quantity:
@@ -207,6 +215,8 @@ class G2PBeneficiaryList(models.Model):
                 rec.list_number = self.search_count([('enrollment_cycle_id', '=', rec.enrollment_cycle_id.id)])
             elif rec.disbursement_cycle_id:
                 rec.list_number = self.search_count([('disbursement_cycle_id', '=', rec.disbursement_cycle_id.id)])
+            if not rec.mnemonic:
+                rec.mnemonic = "Version %s" % rec.list_number
             rec._initialize_workflow()
         return records
 

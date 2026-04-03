@@ -7,7 +7,7 @@
             <form create="0" delete="0">
                 <group>
                     <field name="program_id" invisible="1"/>
-                    <field name="mnemonic" string="Mnemonic"/>
+                    <field name="mnemonic" invisible="1"/>
                     <field name="brief"/>
                     <!-- Hide fields during creation -->
                     <field name="eligibility_process_status" invisible="1"/>

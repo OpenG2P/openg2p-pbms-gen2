@@ -617,22 +617,32 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     @api.depends('beneficiary_list_id')
     def _compute_entitlement_summary_html(self):
         for wizard in self:
+            _logger.info("=== Entitlement HTML Debug ===")
+            _logger.info("beneficiary_list_id: %s", wizard.beneficiary_list_id)
+
             if not wizard.beneficiary_list_id:
                 wizard.entitlement_summary_html = False
+                _logger.info("No beneficiary_list_id")
                 continue
 
             # Get the beneficiary list record
             list_rec = self.env["g2p.beneficiary.list"].browse(wizard.beneficiary_list_id)
+            _logger.info("list_rec exists: %s", list_rec.exists())
+            _logger.info("disbursement_quantity: %s", list_rec.disbursement_quantity if list_rec.exists() else 'N/A')
+            _logger.info("list_stage: %s", wizard.list_stage)
+            _logger.info("entitlement_process_status: %s", list_rec.entitlement_process_status if list_rec.exists() else 'N/A')
+
             if not list_rec.exists() or not list_rec.disbursement_quantity:
                 wizard.entitlement_summary_html = False
+                _logger.info("No disbursement_quantity data")
                 continue
 
             try:
                 data = json.loads(list_rec.disbursement_quantity)
+                _logger.info("Parsed data: %s (type: %s)", data, type(data).__name__)
                 items = []
 
                 if isinstance(data, list):
-                    # Format: [{"benefit_code": "RICE", "quantity": 500, "unit": "KG"}, ...]
                     for item in data:
                         code = item.get('benefit_code') or item.get('benefit_mnemonic') or ''
                         qty = item.get('quantity') or item.get('total_disbursement_quantity') or ''
@@ -640,7 +650,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                         if code:
                             items.append("<li>%s: %s %s</li>" % (code, qty, unit))
                 elif isinstance(data, dict):
-                    # Format: {"RICE": {"quantity": 500, "unit": "KG"}, ...}
                     for code, details in data.items():
                         if isinstance(details, dict):
                             qty = details.get('quantity') or details.get('total_disbursement_quantity') or ''
@@ -651,9 +660,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                         items.append("<li>%s: %s %s</li>" % (code, qty, unit))
 
                 if items:
-                    wizard.entitlement_summary_html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
+                    html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
+                    wizard.entitlement_summary_html = html
+                    _logger.info("Generated HTML: %s", html)
                 else:
                     wizard.entitlement_summary_html = False
+                    _logger.info("No items parsed from data")
             except Exception as e:
                 _logger.warning("Failed to parse disbursement_quantity: %s", e)
                 wizard.entitlement_summary_html = False

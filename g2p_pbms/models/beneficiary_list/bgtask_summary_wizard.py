@@ -614,6 +614,32 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 lambda r: r.summary_type == 'entitlement'
             )
 
+    @api.depends('summary_line_ids')
+    def _compute_entitlement_summary_html(self):
+        for wizard in self:
+            lines = wizard.summary_line_ids.filtered(
+                lambda r: r.summary_type == 'entitlement'
+            )
+            if not lines:
+                wizard.entitlement_summary_html = False
+                continue
+            items = []
+            for line in lines:
+                # Extract just the benefit code from key like "Total Entitlement - RICE"
+                key = line.key or ""
+                if " - " in key:
+                    key = key.split(" - ", 1)[1]
+                items.append(
+                    "<li>%s: %s</li>" % (key, line.value or "")
+                )
+            wizard.entitlement_summary_html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
+
+    entitlement_summary_html = fields.Html(
+        string="Entitlements",
+        compute="_compute_entitlement_summary_html",
+        sanitize=False,
+    )
+
     @api.depends('beneficiary_list_id')
     def _compute_verification_ids(self):
         for wizard in self:

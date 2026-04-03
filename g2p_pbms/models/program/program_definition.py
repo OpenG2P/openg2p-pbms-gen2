@@ -56,6 +56,11 @@ class G2PProgramDefinition(models.Model):
         "program_id",
         string="Disbursement Cycle",
     )
+    latest_disbursement_cycle = fields.Char(
+        string="Latest Disbursement Cycle",
+        compute="_compute_latest_disbursement_cycle",
+        store=False,
+    )
     workflow_stage_ids = fields.One2many(
         "g2p.workflow.stage.definition",
         "program_id",
@@ -158,6 +163,12 @@ class G2PProgramDefinition(models.Model):
             latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
             rec.latest_enrollment_cycle = latest.cycle_name if latest else ''
 
+    @api.depends('disbursement_cycle_ids.cycle_number')
+    def _compute_latest_disbursement_cycle(self):
+        for rec in self:
+            latest = rec.disbursement_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_disbursement_cycle = latest.cycle_name if latest else ''
+
     @api.depends('entitlement_id')
     def _compute_entitlement_inline_ids(self):
         for rec in self:
@@ -196,6 +207,20 @@ class G2PProgramDefinition(models.Model):
             'context': {
                 'default_program_id': self.id,
                 'create': True,
+            },
+            'target': 'current',
+        }
+
+    def action_view_disbursement_cycles(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': '%s - Disbursement Cycles' % self.program_mnemonic,
+            'res_model': 'g2p.disbursement.cycle',
+            'view_mode': 'tree,form',
+            'domain': [('program_id', '=', self.id)],
+            'context': {
+                'default_program_id': self.id,
             },
             'target': 'current',
         }

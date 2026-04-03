@@ -289,6 +289,11 @@ class G2PBeneficiaryList(models.Model):
         if current_stage.is_final_stage:
             pending.unlink()
             self.workflow_approval_status = "APPROVED"
+            self.list_workflow_status = (
+                "approved_final_enrolment" if self.list_stage == "enrollment"
+                else "approved_for_disbursement"
+            )
+            self.approval_date = fields.Date.context_today(self)
         else:
             next_stage = self.env["g2p.workflow.stage.definition"].search(
                 [
@@ -315,6 +320,11 @@ class G2PBeneficiaryList(models.Model):
             else:
                 pending.unlink()
                 self.workflow_approval_status = "APPROVED"
+                self.list_workflow_status = (
+                    "approved_final_enrolment" if self.list_stage == "enrollment"
+                    else "approved_for_disbursement"
+                )
+                self.approval_date = fields.Date.context_today(self)
 
     def action_reject_stage(self, reason=None):
         """Reject the current pending stage; mark list REJECTED."""
@@ -352,6 +362,18 @@ class G2PBeneficiaryList(models.Model):
             })
         pending.unlink()
         self.workflow_approval_status = "REJECTED"
+
+    def action_view_stage_history(self):
+        self.ensure_one()
+        return {
+            "name": "%s - Approval History" % self.mnemonic,
+            "type": "ir.actions.act_window",
+            "res_model": "g2p.workflow.stage.history",
+            "view_mode": "tree",
+            "domain": [("list_id", "=", self.id)],
+            "target": "new",
+            "context": {"create": False, "delete": False},
+        }
 
     def action_open_summary_wizard(self):
         if (

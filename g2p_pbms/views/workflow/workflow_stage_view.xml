@@ -35,16 +35,17 @@
         <field name="name">g2p.workflow.stage.history.tree</field>
         <field name="model">g2p.workflow.stage.history</field>
         <field name="arch" type="xml">
-            <tree string="Stage History" default_order="acted_at desc" create="0" delete="0">
+            <tree string="Stage History" default_order="acted_at asc" create="0" delete="0">
                 <field name="stage_number" string="Stage #"/>
                 <field name="stage_name" string="Stage"/>
-                <field name="list_type" string="Type"/>
+                <field name="enqueued_at" string="Enqueued At"/>
                 <field name="status" string="Status" widget="badge"
                        decoration-success="status == 'APPROVED'"
                        decoration-danger="status == 'REJECTED'"
                        decoration-warning="status == 'PENDING'"/>
+                <field name="reason" string="Reason"/>
                 <field name="acted_by" string="By"/>
-                <field name="acted_at" string="At"/>
+                <field name="acted_at" string="On"/>
             </tree>
         </field>
     </record>

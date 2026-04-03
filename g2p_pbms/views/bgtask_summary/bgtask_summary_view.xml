@@ -186,7 +186,8 @@
                          decoration-danger="workflow_approval_status == 'REJECTED'"/>
                   <field name="number_of_registrants" string="# Beneficiaries"/>
                   <field name="creation_date" string="Created On" readonly="1"/>
-                  <field name="stage_history_ids" string="Stage History" widget="stage_history_widget" readonly="1"/>
+                  <button name="action_view_stage_history" type="object"
+                          string="View" class="oe_link" title="View Approval History"/>
                 </tree>
               </field>
             </page>

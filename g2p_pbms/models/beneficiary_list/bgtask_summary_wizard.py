@@ -617,14 +617,17 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     @api.depends('summary_line_ids')
     def _compute_entitlement_summary_html(self):
         for wizard in self:
+            _logger.info("=== Entitlement Summary Debug ===")
+            _logger.info("Total summary_line_ids: %s", len(wizard.summary_line_ids))
+
+            # Log all lines to see what types they have
+            for line in wizard.summary_line_ids:
+                _logger.info("  ALL Line: key=%s, value=%s, type=%s", line.key, line.value, line.summary_type)
+
             lines = wizard.summary_line_ids.filtered(
                 lambda r: r.summary_type == 'entitlement'
             )
-            _logger.info("=== Entitlement Summary Debug ===")
-            _logger.info("Total summary_line_ids: %s", len(wizard.summary_line_ids))
             _logger.info("Entitlement lines: %s", len(lines))
-            for line in lines:
-                _logger.info("  Line: key=%s, value=%s, type=%s", line.key, line.value, line.summary_type)
 
             if not lines:
                 wizard.entitlement_summary_html = False

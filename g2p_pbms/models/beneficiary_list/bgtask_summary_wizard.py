@@ -614,37 +614,49 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 lambda r: r.summary_type == 'entitlement'
             )
 
-    @api.depends('summary_line_ids')
+    @api.depends('beneficiary_list_id')
     def _compute_entitlement_summary_html(self):
         for wizard in self:
-            _logger.info("=== Entitlement Summary Debug ===")
-            _logger.info("Total summary_line_ids: %s", len(wizard.summary_line_ids))
-
-            # Log all lines to see what types they have
-            for line in wizard.summary_line_ids:
-                _logger.info("  ALL Line: key=%s, value=%s, type=%s", line.key, line.value, line.summary_type)
-
-            lines = wizard.summary_line_ids.filtered(
-                lambda r: r.summary_type == 'entitlement'
-            )
-            _logger.info("Entitlement lines: %s", len(lines))
-
-            if not lines:
+            if not wizard.beneficiary_list_id:
                 wizard.entitlement_summary_html = False
-                _logger.info("No entitlement lines found, setting to False")
                 continue
-            items = []
-            for line in lines:
-                # Extract just the benefit code from key like "Total Entitlement - RICE"
-                key = line.key or ""
-                if " - " in key:
-                    key = key.split(" - ", 1)[1]
-                items.append(
-                    "<li>%s: %s</li>" % (key, line.value or "")
-                )
-            html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
-            wizard.entitlement_summary_html = html
-            _logger.info("Generated HTML: %s", html)
+
+            # Get the beneficiary list record
+            list_rec = self.env["g2p.beneficiary.list"].browse(wizard.beneficiary_list_id)
+            if not list_rec.exists() or not list_rec.disbursement_quantity:
+                wizard.entitlement_summary_html = False
+                continue
+
+            try:
+                data = json.loads(list_rec.disbursement_quantity)
+                items = []
+
+                if isinstance(data, list):
+                    # Format: [{"benefit_code": "RICE", "quantity": 500, "unit": "KG"}, ...]
+                    for item in data:
+                        code = item.get('benefit_code') or item.get('benefit_mnemonic') or ''
+                        qty = item.get('quantity') or item.get('total_disbursement_quantity') or ''
+                        unit = item.get('unit') or item.get('measurement_unit') or ''
+                        if code:
+                            items.append("<li>%s: %s %s</li>" % (code, qty, unit))
+                elif isinstance(data, dict):
+                    # Format: {"RICE": {"quantity": 500, "unit": "KG"}, ...}
+                    for code, details in data.items():
+                        if isinstance(details, dict):
+                            qty = details.get('quantity') or details.get('total_disbursement_quantity') or ''
+                            unit = details.get('unit') or details.get('measurement_unit') or ''
+                        else:
+                            qty = details
+                            unit = ''
+                        items.append("<li>%s: %s %s</li>" % (code, qty, unit))
+
+                if items:
+                    wizard.entitlement_summary_html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
+                else:
+                    wizard.entitlement_summary_html = False
+            except Exception as e:
+                _logger.warning("Failed to parse disbursement_quantity: %s", e)
+                wizard.entitlement_summary_html = False
 
     entitlement_summary_html = fields.Html(
         string="Entitlements",

@@ -117,7 +117,7 @@
         <field name="name">g2p.disbursement.cycle.tree</field>
         <field name="model">g2p.disbursement.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false" open="false">
+            <tree default_order="cycle_number desc" delete="false">
                 <control>
                     <create string="Create New Disbursement Cycle"/>
                 </control>

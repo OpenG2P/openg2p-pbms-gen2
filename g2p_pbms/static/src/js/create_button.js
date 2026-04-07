@@ -4,6 +4,8 @@ import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
 import { useState, onWillStart } from "@odoo/owl";
 
+const NO_OPEN_MODELS = ["g2p.enrollment.cycle", "g2p.disbursement.cycle"];
+
 patch(ListController.prototype, {
     setup() {
         super.setup();
@@ -105,6 +107,13 @@ patch(ListController.prototype, {
             target: "current",
             context: { create: false, area_form_edit: true },
         });
+    },
+
+    openRecord(record) {
+        if (NO_OPEN_MODELS.includes(this.props.resModel)) {
+            return;
+        }
+        return super.openRecord(record);
     },
 
     load_administrative_area_small_wizard() {

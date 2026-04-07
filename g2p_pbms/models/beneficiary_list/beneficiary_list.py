@@ -149,6 +149,27 @@ class G2PBeneficiaryList(models.Model):
         compute="_compute_latest_stage_history",
         store=True,
     )
+    final_stage_number = fields.Integer(
+        string="Final Stage #",
+        related="latest_stage_history_id.stage_number",
+        store=False,
+    )
+    final_stage_name = fields.Char(
+        string="Final Stage",
+        related="latest_stage_history_id.stage_name",
+        store=False,
+    )
+    final_acted_by = fields.Many2one(
+        "res.users",
+        string="Final Acted By",
+        related="latest_stage_history_id.acted_by",
+        store=False,
+    )
+    final_acted_at = fields.Datetime(
+        string="Final Acted At",
+        related="latest_stage_history_id.acted_at",
+        store=False,
+    )
 
     creation_date = fields.Datetime(string="Creation Date", default=fields.Datetime.now, readonly=True)
     processed_date = fields.Datetime(string="Processed Date", default=None, readonly=True)

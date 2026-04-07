@@ -51,21 +51,18 @@
               <group string="Beneficiaries">
                 <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
                 <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
+                <field name="computation_status" string="Computation Status" readonly="1"/>
+                <field name="total_entitlements" string="Total Entitlements" readonly="1"/>
               </group>
               <group string="Entitlements" invisible="not entitlement_summary_html">
                 <field name="entitlement_summary_html" nolabel="1" readonly="1"/>
               </group>
             </div>
-            <div class="col-3" invisible="current_approval_status == 'PENDING'">
-              <group string="Summary">
-                <field name="current_acted_at" string="Approved On" readonly="1"
-                       invisible="current_approval_status != 'APPROVED'"/>
-                <field name="current_acted_by" string="Approved By" readonly="1"
-                       invisible="current_approval_status != 'APPROVED'"/>
-                <field name="current_acted_at" string="Rejected On" readonly="1"
-                       invisible="current_approval_status != 'REJECTED'"/>
-                <field name="current_acted_by" string="Rejected By" readonly="1"
-                       invisible="current_approval_status != 'REJECTED'"/>
+            <div class="col-3" invisible="list_stage != 'disbursement'">
+              <group string="Bridge Status">
+                <field name="bridge_dispatch_status" string="Dispatch Status" readonly="1"/>
+                <field name="bridge_envelope_count" string="# of Envelopes" readonly="1"/>
+                <field name="bridge_batch_count" string="# of Batches" readonly="1"/>
               </group>
             </div>
           </div>

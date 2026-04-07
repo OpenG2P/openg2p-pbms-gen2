@@ -435,6 +435,11 @@ class G2PBeneficiaryList(models.Model):
             "current_enqueued_at": pending.enqueued_at if pending else (latest_history.enqueued_at if latest_history else False),
             "current_beneficiary_count": self.number_of_registrants,
             "eligibility_process_status": self.eligibility_process_status,
+            # Beneficiary extra fields
+            "computation_status": self.entitlement_process_status or "not_applicable",
+            "total_entitlements": self.number_of_entitlements_processed,
+            # Bridge Status fields
+            "bridge_dispatch_status": self.disbursement_cycle_id.envelope_creation_status if self.disbursement_cycle_id else False,
         }
 
         wizard = self.env["g2p.bgtask.summary.wizard"].create(wizard_vals)

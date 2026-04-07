@@ -133,6 +133,21 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     eligibility_process_status = fields.Char(string="Resolution Status")
     can_create_list = fields.Boolean(string="Can Create Version", default=False)
 
+    # --- Bridge Status fields ---
+    bridge_dispatch_status = fields.Char(string="Dispatch Status")
+    bridge_envelope_count = fields.Integer(
+        string="# of Envelopes",
+        compute="_compute_bridge_counts",
+    )
+    bridge_batch_count = fields.Integer(
+        string="# of Batches",
+        compute="_compute_bridge_counts",
+    )
+
+    # --- Extra Beneficiary fields ---
+    computation_status = fields.Char(string="Computation Status")
+    total_entitlements = fields.Integer(string="Total Entitlements")
+
     # --- Approval queue context ---
     pending_stage_id = fields.Many2one("g2p.workflow.pending.stage", string="Pending Stage")
     show_approval_buttons = fields.Boolean(
@@ -146,6 +161,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             rec.show_approval_buttons = bool(
                 rec.pending_stage_id and rec.current_approval_status == "PENDING"
             )
+
+    @api.depends("disbursement_envelope_line_ids", "disbursement_batch_line_ids")
+    def _compute_bridge_counts(self):
+        for rec in self:
+            rec.bridge_envelope_count = len(rec.disbursement_envelope_line_ids)
+            rec.bridge_batch_count = len(rec.disbursement_batch_line_ids)
 
     def action_wizard_approve(self):
         self.ensure_one()

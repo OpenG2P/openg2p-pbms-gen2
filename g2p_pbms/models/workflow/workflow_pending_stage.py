@@ -34,53 +34,53 @@ class G2PWorkflowPendingStage(models.Model):
 
     # --- Related fields for approval queue display ---
     program_id = fields.Many2one(
-        "g2p.program.definition", related="list_id.program_id", store=True, string="Program"
+        "g2p.program.definition", related="list_id.program_id", string="Program"
     )
     program_mnemonic = fields.Char(
-        related="list_id.program_id.program_mnemonic", store=True, string="Program"
+        related="list_id.program_id.program_mnemonic", string="Program"
     )
     program_description = fields.Char(
-        related="list_id.program_id.description", store=True, string="Program Description"
+        related="list_id.program_id.description", string="Program Description"
     )
     list_stage = fields.Selection(
-        related="list_id.list_stage", store=True, string="Type"
+        related="list_id.list_stage", string="Type"
     )
     list_number = fields.Integer(
-        related="list_id.list_number", store=True, string="Current Version"
+        related="list_id.list_number", string="Current Version"
     )
     number_of_registrants = fields.Integer(
-        related="list_id.number_of_registrants", store=True, string="# of Beneficiaries"
+        related="list_id.number_of_registrants", string="# of Beneficiaries"
     )
     current_stage_name = fields.Char(
         related="list_id.current_stage_name", string="Current Stage"
     )
     enrollment_cycle_id = fields.Many2one(
-        "g2p.enrollment.cycle", related="list_id.enrollment_cycle_id", store=True
+        "g2p.enrollment.cycle", related="list_id.enrollment_cycle_id"
     )
     disbursement_cycle_id = fields.Many2one(
-        "g2p.disbursement.cycle", related="list_id.disbursement_cycle_id", store=True
+        "g2p.disbursement.cycle", related="list_id.disbursement_cycle_id"
     )
 
     # --- Computed cycle info ---
     cycle_name = fields.Char(
-        string="Cycle #", compute="_compute_cycle_info", store=True
+        string="Cycle #", compute="_compute_cycle_info"
     )
     cycle_created_on = fields.Datetime(
-        string="Cycle Created On", compute="_compute_cycle_info", store=True
+        string="Cycle Created On", compute="_compute_cycle_info"
     )
     cycle_created_by = fields.Many2one(
-        "res.users", string="Cycle Created By", compute="_compute_cycle_info", store=True
+        "res.users", string="Cycle Created By", compute="_compute_cycle_info"
     )
 
     # --- History info ---
     previous_stage_name = fields.Char(
-        string="Previous Stage", compute="_compute_history_info", store=True
+        string="Previous Stage", compute="_compute_history_info"
     )
     approved_by = fields.Many2one(
-        "res.users", string="Approved By", compute="_compute_history_info", store=True
+        "res.users", string="Approved By", compute="_compute_history_info"
     )
     approved_at = fields.Datetime(
-        string="Approved On", compute="_compute_history_info", store=True
+        string="Approved On", compute="_compute_history_info"
     )
 
     # --- Computed relational collections for detail view ---

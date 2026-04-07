@@ -38,7 +38,7 @@
                     Create Code
                 </button>
                 <button
-                    t-if="model.root.resModel == 'g2p.program.definition' and permissions.canCreateProgram and env.searchModel and env.searchModel.context and env.searchModel.context.program_view_mode != 'management'"
+                    t-if="model.root.resModel == 'g2p.program.definition' and permissions.canCreateProgram and env.searchModel and env.searchModel.context and env.searchModel.context.program_view_mode and env.searchModel.context.program_view_mode != 'management'"
                     type="button"
                     class="btn btn-primary o_list_button_add_program"
                     title="Create a New Program"

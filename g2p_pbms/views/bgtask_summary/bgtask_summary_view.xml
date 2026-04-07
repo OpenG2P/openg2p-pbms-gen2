@@ -51,8 +51,8 @@
               <group string="Beneficiaries">
                 <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
                 <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
-                <field name="computation_status" string="Computation Status" readonly="1"/>
-                <field name="total_entitlements" string="Total Entitlements" readonly="1"/>
+                <field name="computation_status" string="Computation Status" readonly="1" invisible="list_stage != 'disbursement'"/>
+                <field name="total_entitlements" string="Total Entitlements" readonly="1" invisible="list_stage != 'disbursement'"/>
               </group>
               <group string="Entitlements" invisible="not entitlement_summary_html">
                 <field name="entitlement_summary_html" nolabel="1" readonly="1"/>

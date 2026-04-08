@@ -60,7 +60,8 @@
             </div>
             <div class="col-3" invisible="list_stage != 'disbursement'">
               <group string="Bridge Status">
-                <field name="bridge_dispatch_status" string="Dispatch Status" readonly="1"/>
+                <field name="envelope_status" string="Envelope Status" readonly="1"/>
+                <field name="disbursement_batch_status" string="Batch Status" readonly="1"/>
                 <field name="bridge_envelope_count" string="# of Envelopes" readonly="1"/>
                 <field name="bridge_batch_count" string="# of Batches" readonly="1"/>
               </group>

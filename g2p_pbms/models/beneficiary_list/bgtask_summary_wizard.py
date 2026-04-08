@@ -134,7 +134,9 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     can_create_list = fields.Boolean(string="Can Create Version", default=False)
 
     # --- Bridge Status fields ---
-    bridge_dispatch_status = fields.Char(string="Dispatch Status")
+    # bridge_dispatch_status = fields.Char(string="Dispatch Status")
+    envelope_status = fields.Char(string="Envelope Status")
+    disbursement_batch_status = fields.Char(string="Batch Status")
     bridge_envelope_count = fields.Integer(
         string="# of Envelopes",
         compute="_compute_bridge_counts",

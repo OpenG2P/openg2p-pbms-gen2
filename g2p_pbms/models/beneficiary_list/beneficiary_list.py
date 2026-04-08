@@ -465,7 +465,8 @@ class G2PBeneficiaryList(models.Model):
             "computation_status": self.entitlement_process_status or "not_applicable",
             "total_entitlements": self.number_of_entitlements_processed,
             # Bridge Status fields
-            "bridge_dispatch_status": self.disbursement_cycle_id.envelope_creation_status if self.disbursement_cycle_id else False,
+            "envelope_status": self.envelope_creation_status,
+            "disbursement_batch_status": self.disbursement_batch_creation_status
         }
 
         wizard = self.env["g2p.bgtask.summary.wizard"].create(wizard_vals)

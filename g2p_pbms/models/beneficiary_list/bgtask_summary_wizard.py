@@ -13,6 +13,7 @@ from odoo.addons.g2p_registry_type_addon.models import (
 from openg2p_fastapi_common.schemas import G2PRequestHeader, G2PPaginationRequest
 from openg2p_g2p_bridge_models.schemas import (
     DisbursementEnvelopeStatusRequest,
+    DisbursementEnvelopeStatusRequestBody,
     DisbursementEnvelopeStatusResponse,
     DisbursementBatchControlRequest,
     DisbursementBatchControlResponse,
@@ -883,8 +884,9 @@ class G2PAPIDisbursementEnvelopeLine(models.TransientModel):
                     request_timestamp=datetime.utcnow().isoformat(),
                     instance_id="string"
                 ),
-                message=self.disbursement_envelope_id
-                
+                request_body=DisbursementEnvelopeStatusRequestBody(
+                    request_payload=self.disbursement_envelope_id
+                ),
             )
             payload = payload.model_dump(mode="json")
 

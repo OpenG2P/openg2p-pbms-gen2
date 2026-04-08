@@ -16,6 +16,7 @@ from openg2p_g2p_bridge_models.schemas import (
     DisbursementEnvelopeStatusRequestBody,
     DisbursementEnvelopeStatusResponse,
     DisbursementBatchControlRequest,
+    DisbursementBatchControlRequestBody,
     DisbursementBatchControlResponse,
 )
 from openg2p_bg_task_models.schemas import (
@@ -1079,8 +1080,9 @@ class G2PAPIDisbursementBatchLine(models.TransientModel):
                     request_timestamp=datetime.utcnow().isoformat(),
                     instance_id="string"
                 ),
-                message=self.batch_id
-                
+                request_body=DisbursementBatchControlRequestBody(
+                    request_payload=self.batch_id
+                ),
             )
             payload = payload.model_dump(mode="json")
 

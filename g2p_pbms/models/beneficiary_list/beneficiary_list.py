@@ -204,7 +204,7 @@ class G2PBeneficiaryList(models.Model):
     @api.depends('stage_history_ids.acted_at')
     def _compute_latest_stage_history(self):
         for rec in self:
-            history = rec.stage_history_ids.sorted('acted_at', reverse=True)
+            history = rec.stage_history_ids.sorted('id', reverse=True)
             rec.latest_stage_history_id = history[:1] or False
 
     @api.depends("pending_stage_ids.current_stage_id")

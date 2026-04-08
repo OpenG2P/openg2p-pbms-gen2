@@ -307,45 +307,50 @@ class G2PBeneficiaryList(models.Model):
                 **history_vals,
             })
 
-        if current_stage.is_final_stage:
+        # if current_stage.is_final_stage:
+        #     pending.unlink()
+        #     self.workflow_approval_status = "APPROVED"
+        #     self.list_workflow_status = (
+        #         "approved_final_enrolment" if self.list_stage == "enrollment"
+        #         else "approved_for_disbursement"
+        #     )
+        #     self.approval_date = fields.Date.context_today(self)
+        # else:
+        next_stage = self.env["g2p.workflow.stage.definition"].search(
+            [
+                ("program_id", "=", self.program_id.id),
+                ("cycle_type", "=", current_stage.cycle_type),
+                ("stage_number", ">", current_stage.stage_number),
+            ],
+            order="stage_number asc",
+            limit=1,
+        )
+        if next_stage:
+            now = fields.Datetime.now()
+            pending.write({
+                "current_stage_id": next_stage.id,
+                "enqueued_at": now,
+            })
+            self.env["g2p.workflow.stage.history"].sudo().create({
+                "list_id": self.id,
+                "list_type": list_type,
+                "stage_id": next_stage.id,
+                "enqueued_at": now,
+                "status": "PENDING",
+            })
+        else:
             pending.unlink()
             self.workflow_approval_status = "APPROVED"
             self.list_workflow_status = (
                 "approved_final_enrolment" if self.list_stage == "enrollment"
                 else "approved_for_disbursement"
             )
-            self.approval_date = fields.Date.context_today(self)
-        else:
-            next_stage = self.env["g2p.workflow.stage.definition"].search(
-                [
-                    ("program_id", "=", self.program_id.id),
-                    ("cycle_type", "=", current_stage.cycle_type),
-                    ("stage_number", ">", current_stage.stage_number),
-                ],
-                order="stage_number asc",
-                limit=1,
+            self.envelope_creation_status = (
+                "pending" if self.list_stage == "disbursement" 
+                else "not_applicable"
             )
-            if next_stage:
-                now = fields.Datetime.now()
-                pending.write({
-                    "current_stage_id": next_stage.id,
-                    "enqueued_at": now,
-                })
-                self.env["g2p.workflow.stage.history"].sudo().create({
-                    "list_id": self.id,
-                    "list_type": list_type,
-                    "stage_id": next_stage.id,
-                    "enqueued_at": now,
-                    "status": "PENDING",
-                })
-            else:
-                pending.unlink()
-                self.workflow_approval_status = "APPROVED"
-                self.list_workflow_status = (
-                    "approved_final_enrolment" if self.list_stage == "enrollment"
-                    else "approved_for_disbursement"
-                )
-                self.approval_date = fields.Date.context_today(self)
+            self.approval_date = fields.Date.context_today(self)
+
 
     def action_reject_stage(self, reason=None):
         """Reject the current pending stage; mark list REJECTED."""

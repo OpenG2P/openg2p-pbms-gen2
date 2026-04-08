@@ -22,9 +22,9 @@ class G2PWorkflowStageDefinition(models.Model):
              "(e.g. g2p_pbms.group_enrolment_approver). "
              "Leave blank to allow any approver.",
     )
-    is_final_stage = fields.Boolean(
-        compute="_compute_is_final_stage", store=True, string="Is Final Stage"
-    )
+    # is_final_stage = fields.Boolean(
+    #     compute="_compute_is_final_stage", store=True, string="Is Final Stage"
+    # )
 
     _sql_constraints = [
         (
@@ -39,18 +39,18 @@ class G2PWorkflowStageDefinition(models.Model):
         ),
     ]
 
-    @api.depends("stage_number", "program_id", "cycle_type")
-    def _compute_is_final_stage(self):
-        for rec in self:
-            if not rec.program_id or not rec.cycle_type:
-                rec.is_final_stage = False
-                continue
-            max_stage = self.search(
-                [
-                    ("program_id", "=", rec.program_id.id),
-                    ("cycle_type", "=", rec.cycle_type),
-                ],
-                order="stage_number desc",
-                limit=1,
-            )
-            rec.is_final_stage = max_stage.id == rec.id
+    # @api.depends("stage_number", "program_id", "cycle_type")
+    # def _compute_is_final_stage(self):
+    #     for rec in self:
+    #         if not rec.program_id or not rec.cycle_type:
+    #             rec.is_final_stage = False
+    #             continue
+    #         max_stage = self.search(
+    #             [
+    #                 ("program_id", "=", rec.program_id.id),
+    #                 ("cycle_type", "=", rec.cycle_type),
+    #             ],
+    #             order="stage_number desc",
+    #             limit=1,
+    #         )
+    #         rec.is_final_stage = max_stage.id == rec.id

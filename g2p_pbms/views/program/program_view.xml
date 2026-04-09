@@ -252,6 +252,7 @@
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_enrollment_cycle" string="Latest Cycle"/>
         <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
+        <button name="action_open_create_cycle_wizard" type="object" string="Create New Cycle" class="oe_link"/>
       </tree>
     </field>
   </record>

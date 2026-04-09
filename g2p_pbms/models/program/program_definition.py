@@ -219,6 +219,21 @@ class G2PProgramDefinition(models.Model):
             'target': 'current',
         }
 
+    def action_open_create_cycle_wizard(self):
+        """Open the Create New Cycle wizard from the program list, with program pre-filled."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'New Enrolment Cycle',
+            'res_model': 'g2p.enrollment.cycle.create.wizard',
+            'view_mode': 'form',
+            'views': [[False, 'form']],
+            'target': 'new',
+            'context': {
+                'default_program_id': self.id,
+            },
+        }
+
 
     def action_view_disbursement_cycles(self):
         self.ensure_one()

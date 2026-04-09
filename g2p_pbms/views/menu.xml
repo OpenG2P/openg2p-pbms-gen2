@@ -3,7 +3,7 @@
     <menuitem id="menu_g2p_root" name="PBMS" sequence="0"/>
 
     <!-- Approval Queue -->
-    <menuitem id="menu_g2p_approval_queue" name="Approvals" parent="menu_g2p_root" action="action_g2p_approvals_client" sequence="1"/>
+    <menuitem id="menu_g2p_approval_queue" name="Approvals" parent="menu_g2p_root" action="action_g2p_approvals_client" sequence="1" groups="g2p_pbms.group_enrolment_1,g2p_pbms.group_enrolment_2,g2p_pbms.group_disbursement_1,g2p_pbms.group_disbursement_2,g2p_pbms.group_enrolment_approval,g2p_pbms.group_disbursement_approval,g2p_pbms.group_program_super_administration"/>
 
     <!-- Programs (direct) -->
     <menuitem id="menu_g2p_programs" name="Programs" parent="menu_g2p_root" action="action_g2p_programs_config" sequence="2" groups="g2p_pbms.group_program_editor,g2p_pbms.group_program_viewer"/>

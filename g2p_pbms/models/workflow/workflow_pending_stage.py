@@ -146,31 +146,9 @@ class G2PWorkflowPendingStage(models.Model):
     @api.model
     def _get_approval_queue_stage_ids(self):
         """Return stage IDs that the current user can approve based on their groups."""
-        user_group_refs = set()
-        for group in self.env.user.groups_id:
-            # Build full XML ref: module.xml_id
-            imd = self.env['ir.model.data'].search([
-                ('model', '=', 'res.groups'),
-                ('res_id', '=', group.id),
-            ], limit=1)
-            if imd:
-                user_group_refs.add('%s.%s' % (imd.module, imd.name))
-
-        if not user_group_refs:
-            return []
-
-        # Find stages where at least one of the user's groups is in the roles CSV
+        user_groups = self.env.user.groups_id
         all_stages = self.env['g2p.workflow.stage.definition'].search([])
-        matching_ids = []
-        for stage in all_stages:
-            if not stage.roles:
-                # No role restriction — any approver can act
-                matching_ids.append(stage.id)
-            else:
-                stage_roles = {r.strip() for r in stage.roles.split(',') if r.strip()}
-                if stage_roles & user_group_refs:
-                    matching_ids.append(stage.id)
-        return matching_ids
+        return [stage.id for stage in all_stages if stage.group_id in user_groups]
 
     @api.model
     def get_approval_queue_domain(self):

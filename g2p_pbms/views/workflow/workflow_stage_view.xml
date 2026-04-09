@@ -10,7 +10,7 @@
                     <group>
                         <field name="stage_number"/>
                         <field name="stage_name"/>
-                        <field name="roles" placeholder="e.g. g2p_pbms.group_enrolment_approver"/>
+                        <field name="group_id" domain="[('category_id', '=', %(g2p_pbms.g2p_pbms)d)]"/>
                     </group>
                 </sheet>
             </form>
@@ -25,7 +25,7 @@
             <tree string="Workflow Stages" default_order="stage_number">
                 <field name="stage_number"/>
                 <field name="stage_name"/>
-                <field name="roles" optional="show"/>
+                <field name="group_id"/>
             </tree>
         </field>
     </record>

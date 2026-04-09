@@ -17,6 +17,10 @@ class ResUsers(models.Model):
             'g2p_pbms.group_geography_operation',
             'g2p_pbms.group_service_provider_operation',
             'g2p_pbms.group_audit_operation',
+            'g2p_pbms.group_enrolment_1',
+            'g2p_pbms.group_enrolment_2',
+            'g2p_pbms.group_disbursement_1',
+            'g2p_pbms.group_disbursement_2',
         ]
         llg_xmlids = [
             'g2p_pbms.group_abstract_model_viewer',

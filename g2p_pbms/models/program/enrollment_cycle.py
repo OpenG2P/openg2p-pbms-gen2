@@ -212,7 +212,7 @@ class G2PEnrollmentCycle(models.Model):
             rec.wip_stage_name = wip.current_stage_name if wip else False
             rec.has_wip_list = bool(wip)
 
-    @api.depends('program_id', 'id')
+    @api.depends('program_id')
     def _compute_previous_cycle_ids(self):
         for rec in self:
             if rec.program_id and rec.id:

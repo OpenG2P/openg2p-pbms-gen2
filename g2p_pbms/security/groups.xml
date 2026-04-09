@@ -325,7 +325,12 @@
   <record id="group_disbursement_1" model="res.groups">
     <field name="implied_ids" eval="[
       ref('group_disbursement_approver'),
+      ref('group_disbursement_viewer'),
       ref('group_beneficiary_list_viewer'),
+      ref('group_priority_rules_viewer'),
+      ref('group_program_viewer'),
+      ref('group_benefit_code_viewer'),
+      ref('group_enrolment_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>
@@ -333,7 +338,12 @@
   <record id="group_disbursement_2" model="res.groups">
     <field name="implied_ids" eval="[
       ref('group_disbursement_approver'),
+      ref('group_disbursement_viewer'),
       ref('group_beneficiary_list_viewer'),
+      ref('group_priority_rules_viewer'),
+      ref('group_program_viewer'),
+      ref('group_benefit_code_viewer'),
+      ref('group_enrolment_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>

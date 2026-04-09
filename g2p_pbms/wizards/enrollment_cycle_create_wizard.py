@@ -77,6 +77,7 @@ class EnrollmentCycleCreateWizard(models.TransientModel):
             "res_model": "g2p.enrollment.cycle",
             "res_id": cycle.id,
             "view_mode": "form",
+            "views": [[False, "form"]],
             "target": "current",
             "context": {"create": False, "enrollment_cycle_form_view": True},
         }

@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="New Enrolment Cycle">
                 <group>
-                    <field name="program_id" readonly="context.get('default_program_id', False)"/>
+                    <field name="program_id" readonly="1"/>
                     <field name="cycle_name"/>
                     <field name="cycle_number" readonly="1"/>
                     <field name="creation_date" readonly="1"/>

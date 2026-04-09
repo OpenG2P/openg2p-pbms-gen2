@@ -88,20 +88,6 @@
           <notebook>
             <!-- Statistics: eligibility/entitlement statistics from API -->
             <page string="Statistics">
-              <group invisible="list_stage == 'enrollment'">
-                <div style="white-space: nowrap; margin-bottom: 10px;">
-                  <strong>
-                    <field name="general_title" readonly="1" widget="handle_display"/>
-                  </strong>
-                </div>
-                <field name="summary_general_line_ids" nolabel="1" colspan="2">
-                  <tree class="summary_tree_view" create="false" edit="false">
-                    <field name="summary_type" nolabel="1" invisible="1"/>
-                    <field name="key" nolabel="1"/>
-                    <field name="value" nolabel="1"/>
-                  </tree>
-                </field>
-              </group>
               <group colspan="2">
                 <group>
                   <div style="white-space: nowrap; margin-bottom: 10px;">

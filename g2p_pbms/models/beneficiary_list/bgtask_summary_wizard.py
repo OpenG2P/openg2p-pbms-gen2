@@ -78,10 +78,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         'g2p.api.summary.line', 'wizard_id', string='Summary Details',
         compute='_compute_summary_lines', store=True
     )
-    summary_general_line_ids = fields.One2many(
-        'g2p.api.summary.line', 'wizard_id', string='General Info',
-        compute='_compute_general'
-    )
     summary_eligibility_line_ids = fields.One2many(
         'g2p.api.summary.line', 'wizard_id', string='Registry Info',
         compute='_compute_eligibility'
@@ -90,7 +86,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         'g2p.api.summary.line', 'wizard_id', string='Registry Info',
         compute='_compute_entitlement'
     )
-    general_title = fields.Char(compute='_compute_general_title', string="Group Title")
     eligibility_group_title = fields.Char(compute='_compute_eligibility_group_title', string="Group Title")
     entitlement_group_title = fields.Char(compute='_compute_entitlement_group_title', string="Group Title")
 
@@ -247,11 +242,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 if verification_count >= required_reviews:
                     show_button = True
             rec.show_approve_disbursement_button = show_button
-
-    @api.depends('target_registry')
-    def _compute_general_title(self):
-        for rec in self:
-            rec.general_title = 'General Statistics for %s' % rec.target_registry.capitalize()
 
     @api.depends('target_registry')
     def _compute_eligibility_group_title(self):
@@ -617,13 +607,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                         vals[field] = batch.get(field)
                 lines.append((0, 0, vals))
             wizard.disbursement_batch_line_ids = lines
-
-    @api.depends('summary_line_ids')
-    def _compute_general(self):
-        for wizard in self:
-            wizard.summary_general_line_ids = wizard.summary_line_ids.filtered(
-                lambda r: r.summary_type == 'general'
-            )
 
     @api.depends('summary_line_ids')
     def _compute_eligibility(self):

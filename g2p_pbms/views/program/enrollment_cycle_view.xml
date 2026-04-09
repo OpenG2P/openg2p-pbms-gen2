@@ -112,7 +112,7 @@
         <field name="arch" type="xml">
             <tree default_order="cycle_number desc" delete="false" create="0">
                 <control>
-                    <button string="Create New Enrolment Cycle" type="object" name="action_open_create_wizard"/>
+                    <button string="Create New" type="object" name="action_open_create_wizard" context="{'default_program_id': context.get('default_program_id')}"/>
                 </control>
                 <field name="cycle_name" string="Cycle #"/>
                 <field name="creation_date" string="Created On"/>

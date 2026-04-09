@@ -53,7 +53,7 @@ class EnrollmentCycleCreateWizard(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
-        program_id = self.env.context.get("default_program_id")
+        program_id = res.get("program_id") or self.env.context.get("default_program_id")
         if program_id:
             res["program_id"] = program_id
             last = self.env["g2p.enrollment.cycle"].search(

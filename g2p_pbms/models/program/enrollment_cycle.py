@@ -191,6 +191,11 @@ class G2PEnrollmentCycle(models.Model):
             rec.has_wip_list = bool(wip)
 
     def action_open_create_wizard(self):
+        ctx = dict(self.env.context)
+        if not ctx.get("default_program_id"):
+            program_id = ctx.get("active_program_id") or ctx.get("program_id")
+            if program_id:
+                ctx["default_program_id"] = program_id
         return {
             "type": "ir.actions.act_window",
             "name": "New Enrolment Cycle",
@@ -198,7 +203,7 @@ class G2PEnrollmentCycle(models.Model):
             "view_mode": "form",
             "views": [[False, "form"]],
             "target": "new",
-            "context": self.env.context,
+            "context": ctx,
         }
 
     @api.model_create_multi

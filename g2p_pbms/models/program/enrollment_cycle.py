@@ -196,6 +196,7 @@ class G2PEnrollmentCycle(models.Model):
             "name": "New Enrolment Cycle",
             "res_model": "g2p.enrollment.cycle.create.wizard",
             "view_mode": "form",
+            "views": [[False, "form"]],
             "target": "new",
             "context": self.env.context,
         }

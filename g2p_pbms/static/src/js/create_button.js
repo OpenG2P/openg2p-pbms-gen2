@@ -127,4 +127,9 @@ patch(ListController.prototype, {
             context: { create: false, area_form_edit: true },
         });
     },
+
+    async load_enrollment_cycle_wizard() {
+        const action = await this.orm.call("g2p.enrollment.cycle", "action_open_create_wizard", [[]]);
+        this.action.doAction(action);
+    },
 });

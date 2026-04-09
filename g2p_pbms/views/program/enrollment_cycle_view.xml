@@ -110,9 +110,9 @@
         <field name="name">g2p.enrollment.cycle.tree</field>
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false" create="context.get('create', False)">
+            <tree default_order="cycle_number desc" delete="false" create="0">
                 <control>
-                    <create string="Create New Enrolment Cycle"/>
+                    <button string="Create New Enrolment Cycle" type="object" name="action_open_create_wizard"/>
                 </control>
                 <field name="cycle_name" string="Cycle #"/>
                 <field name="creation_date" string="Created On"/>

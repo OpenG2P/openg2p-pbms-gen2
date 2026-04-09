@@ -237,14 +237,35 @@ class G2PProgramDefinition(models.Model):
 
     def action_view_disbursement_cycles(self):
         self.ensure_one()
+        latest_cycle = self.env['g2p.disbursement.cycle'].search(
+            [('program_id', '=', self.id)],
+            order='cycle_number desc',
+            limit=1,
+        )
+        if latest_cycle:
+            return latest_cycle.action_open_view()
+        # No cycles yet — fall back to cycle list
         return {
             'type': 'ir.actions.act_window',
             'name': '%s - Disbursement Cycles' % self.program_mnemonic,
             'res_model': 'g2p.disbursement.cycle',
             'view_mode': 'tree,form',
             'domain': [('program_id', '=', self.id)],
+            'context': {'default_program_id': self.id},
+            'target': 'current',
+        }
+
+    def action_open_create_disbursement_cycle_wizard(self):
+        """Open the Create New Disbursement Cycle wizard from the program list, with program pre-filled."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'New Disbursement Cycle',
+            'res_model': 'g2p.disbursement.cycle',
+            'view_mode': 'form',
+            'views': [[False, 'form']],
+            'target': 'new',
             'context': {
                 'default_program_id': self.id,
             },
-            'target': 'current',
         }

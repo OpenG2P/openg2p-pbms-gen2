@@ -319,12 +319,6 @@ class G2PDisbursementCycle(models.Model):
                 if calculated_date:
                     vals['disbursement_schedule_date'] = calculated_date
         record = super(G2PDisbursementCycle, self).create(vals)
-        if record.program_id:
-            self.env["g2p.beneficiary.list"].create({
-                "disbursement_cycle_id": record.id,
-                "list_stage": "disbursement",
-                "mnemonic": "Version 1",
-            })
         return record
     
     def action_create_new_list(self):
@@ -358,14 +352,24 @@ class G2PDisbursementCycle(models.Model):
         self.ensure_one()
         if self.current_list_id:
             return self.current_list_id.action_open_summary_wizard()
+        # No list yet — open the summary wizard with Create New Version available
+        wizard = self.env["g2p.bgtask.summary.wizard"].create({
+            "disbursement_cycle_id": self.id,
+            "cycle_name": self.cycle_name,
+            "cycle_created_on": self.creation_date,
+            "cycle_created_by": self.create_uid.id,
+            "list_stage": "disbursement",
+            "program_id": self.program_id.id if self.program_id else False,
+            "target_registry": self.program_id.target_registry if self.program_id else False,
+            "can_create_list": True,
+        })
         return {
-            "type": "ir.actions.act_window",
-            "name": "View Disbursement Cycle",
-            "res_model": self._name,
-            "res_id": self.id,
+            "name": "%s / %s" % (self.program_id.program_mnemonic, self.cycle_name) if self.program_id else self.cycle_name,
             "view_mode": "form",
+            "res_model": "g2p.bgtask.summary.wizard",
+            "res_id": wizard.id,
+            "type": "ir.actions.act_window",
             "target": "current",
-            'context':{'create': False, 'disbursement_cycle_form_view':True},
         }
 
     

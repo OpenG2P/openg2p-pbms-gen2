@@ -21,6 +21,13 @@
                  placeholder="Previous Cycles ▾"
                  string=""
                  invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids"/>
+          <!-- Previous Cycles dropdown — disbursement only -->
+          <field name="previous_disbursement_cycle_ids" invisible="1"/>
+          <field name="selected_previous_disbursement_cycle_id" widget="many2one"
+                 options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
+                 placeholder="Previous Cycles ▾"
+                 string=""
+                 invisible="list_stage != 'disbursement' or not previous_disbursement_cycle_ids"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->
@@ -181,6 +188,19 @@
                   <field name="number_of_registrants" string="# of Beneficiaries"/>
                   <button name="action_view_stage_history" type="object"
                           string="View" class="oe_link" title="View Approval History"/>
+                </tree>
+              </field>
+            </page>
+
+            <!-- Disbursement Rules: priority rules for the disbursement cycle -->
+            <page string="Disbursement Rules" invisible="list_stage != 'disbursement'"
+                  attrs="{'invisible': [('list_stage', '!=', 'disbursement')]}">
+              <field name="priority_rule_ids" nolabel="1" readonly="1"
+                     options="{'no_quick_create': True}">
+                <tree create="0" delete="0" edit="0">
+                  <field name="name" string="Rule"/>
+                  <field name="priority" string="Priority"/>
+                  <field name="rule_domain" string="Domain"/>
                 </tree>
               </field>
             </page>

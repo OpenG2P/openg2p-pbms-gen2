@@ -300,7 +300,6 @@
        Disbursement Cycles navigation: Program list -> Cycle list
   ============================================================ -->
 
-  <!-- Program list: just name, opens disbursement cycles form -->
   <record id="view_g2p_programs_disbursement_cycles_tree" model="ir.ui.view">
     <field name="name">g2p.programs.disbursement.cycles.tree</field>
     <field name="model">g2p.program.definition</field>
@@ -309,6 +308,7 @@
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_disbursement_cycle" string="Latest Cycle"/>
         <button name="action_view_disbursement_cycles" type="object" string="View" class="oe_link"/>
+        <button name="action_open_create_disbursement_cycle_wizard" type="object" string="Create New Cycle" class="oe_link"/>
       </tree>
     </field>
   </record>

@@ -205,6 +205,23 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         "g2p.enrollment.cycle",
         string="Previous Cycles",
     )
+    previous_disbursement_cycle_ids = fields.Many2many(
+        "g2p.disbursement.cycle",
+        string="Previous Disbursement Cycles",
+        compute="_compute_previous_disbursement_cycle_ids",
+        store=False,
+    )
+    selected_previous_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        string="Previous Cycles",
+    )
+    # Relay field so we can show the disbursement cycle's priority rules in the wizard
+    priority_rule_ids = fields.Many2many(
+        "g2p.priority.rule.definition",
+        string="Disbursement Rules",
+        compute="_compute_priority_rule_ids",
+        store=False,
+    )
 
     @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
     def _compute_workflow_data(self):
@@ -240,9 +257,35 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             else:
                 rec.previous_enrollment_cycle_ids = EnrollmentCycle
 
+    @api.depends("disbursement_cycle_id")
+    def _compute_previous_disbursement_cycle_ids(self):
+        DisbursementCycle = self.env["g2p.disbursement.cycle"]
+        for rec in self:
+            if rec.disbursement_cycle_id:
+                cycle = DisbursementCycle.browse(rec.disbursement_cycle_id)
+                if cycle.exists() and cycle.program_id:
+                    siblings = DisbursementCycle.search([
+                        ("program_id", "=", cycle.program_id.id),
+                        ("id", "!=", rec.disbursement_cycle_id),
+                    ])
+                    rec.previous_disbursement_cycle_ids = siblings
+                else:
+                    rec.previous_disbursement_cycle_ids = DisbursementCycle
+            else:
+                rec.previous_disbursement_cycle_ids = DisbursementCycle
+
+    @api.depends("disbursement_cycle_id")
+    def _compute_priority_rule_ids(self):
+        for rec in self:
+            if rec.disbursement_cycle_id:
+                cycle = self.env["g2p.disbursement.cycle"].browse(rec.disbursement_cycle_id)
+                rec.priority_rule_ids = cycle.priority_rule_ids if cycle.exists() else self.env["g2p.priority.rule.definition"]
+            else:
+                rec.priority_rule_ids = self.env["g2p.priority.rule.definition"]
+
     @api.onchange('selected_previous_cycle_id')
     def _onchange_selected_previous_cycle_id(self):
-        """Repopulate all wizard fields when a previous cycle is picked."""
+        """Repopulate all wizard fields when a previous enrollment cycle is picked."""
         cycle = self.selected_previous_cycle_id
         if not cycle or not cycle.current_list_id:
             return
@@ -261,6 +304,50 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         self.list_workflow_status = lst.list_workflow_status
         self.enrollment_start_date = cycle.enrollment_start_date
         self.enrollment_end_date = cycle.enrollment_end_date
+        self.cycle_name = cycle.cycle_name
+        self.cycle_created_on = cycle.creation_date
+        self.cycle_created_by = cycle.create_uid.id
+        self.current_version = lst.list_number
+        self.current_stage_display = (
+            lst.current_stage_name if lst.workflow_approval_status == 'PENDING'
+            else (latest_history.stage_name if latest_history else False)
+        )
+        self.current_approval_status = lst.workflow_approval_status
+        self.current_acted_at = latest_history.acted_at if latest_history else False
+        self.current_acted_by = latest_history.acted_by.id if latest_history else False
+        self.can_create_list = lst.workflow_approval_status == 'REJECTED'
+        self.current_enqueued_at = (
+            pending.enqueued_at if pending
+            else (latest_history.enqueued_at if latest_history else False)
+        )
+        self.current_beneficiary_count = lst.number_of_registrants
+        self.eligibility_process_status = lst.eligibility_process_status
+        self.computation_status = lst.entitlement_process_status or 'not_applicable'
+        self.total_entitlements = lst.number_of_entitlements_processed
+        self.envelope_status = lst.envelope_creation_status
+        self.disbursement_batch_status = lst.disbursement_batch_creation_status
+        self.target_registry = lst.program_id.target_registry
+
+    @api.onchange('selected_previous_disbursement_cycle_id')
+    def _onchange_selected_previous_disbursement_cycle_id(self):
+        """Repopulate all wizard fields when a previous disbursement cycle is picked."""
+        cycle = self.selected_previous_disbursement_cycle_id
+        if not cycle or not cycle.current_list_id:
+            return
+        lst = self.env['g2p.beneficiary.list'].browse(cycle.current_list_id.id)
+        if not lst.exists():
+            return
+        latest_history = lst.latest_stage_history_id
+        pending = lst.pending_stage_ids[:1]
+        self.disbursement_cycle_id = cycle.id
+        self.beneficiary_list_id = lst.id
+        self.beneficiary_list_uuid = lst.beneficiary_list_id
+        self.mnemonic = lst.mnemonic
+        self.brief = lst.brief
+        self.program_id = lst.program_id.id
+        self.list_stage = lst.list_stage
+        self.list_workflow_status = lst.list_workflow_status
+        self.disbursement_cycle_mnemonic = cycle.cycle_mnemonic
         self.cycle_name = cycle.cycle_name
         self.cycle_created_on = cycle.creation_date
         self.cycle_created_by = cycle.create_uid.id

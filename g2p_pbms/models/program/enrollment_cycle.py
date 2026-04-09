@@ -190,7 +190,6 @@ class G2PEnrollmentCycle(models.Model):
             rec.wip_stage_name = wip.current_stage_name if wip else False
             rec.has_wip_list = bool(wip)
 
-    @api.model
     def action_open_create_wizard(self):
         return {
             "type": "ir.actions.act_window",

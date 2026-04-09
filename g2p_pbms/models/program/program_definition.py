@@ -198,6 +198,14 @@ class G2PProgramDefinition(models.Model):
 
     def action_view_enrollment_cycles(self):
         self.ensure_one()
+        latest_cycle = self.env['g2p.enrollment.cycle'].search(
+            [('program_id', '=', self.id)],
+            order='cycle_number desc',
+            limit=1,
+        )
+        if latest_cycle:
+            return latest_cycle.action_open_view()
+        # No cycles yet — fall back to cycle list so the user can create one
         return {
             'type': 'ir.actions.act_window',
             'name': '%s - Enrolment Cycles' % self.program_mnemonic,
@@ -210,6 +218,7 @@ class G2PProgramDefinition(models.Model):
             },
             'target': 'current',
         }
+
 
     def action_view_disbursement_cycles(self):
         self.ensure_one()

@@ -12,8 +12,6 @@
           <button name="action_wizard_reject" type="object" string="Reject"
                   class="btn-danger" invisible="not show_approval_buttons"
                   groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
-          <button name="action_refresh_data" type="object" string="Refresh Data"
-                  class="btn-secondary" icon="fa-refresh" invisible="not id"/>
           <button name="action_create_new_version" type="object" string="Create New Version"
                   class="btn-primary" icon="fa-plus" invisible="not can_create_list"/>
           <!-- Previous Cycles dropdown — enrollment only -->
@@ -23,9 +21,6 @@
                  placeholder="Previous Cycles ▾"
                  string=""
                  invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids"/>
-          <button name="action_go_to_previous_cycle" type="object"
-                  string="Go" class="btn-secondary"
-                  invisible="not selected_previous_cycle_id"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->

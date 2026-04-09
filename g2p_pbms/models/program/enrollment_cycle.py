@@ -113,6 +113,22 @@ class G2PEnrollmentCycle(models.Model):
         ),
     ]
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        program_id = res.get('program_id') or self.env.context.get('default_program_id')
+        if program_id:
+            last = self.search(
+                [('program_id', '=', program_id)],
+                order='cycle_number desc',
+                limit=1,
+            )
+            next_number = (last.cycle_number or 0) + 1
+            res['cycle_number'] = next_number
+            if not res.get('cycle_name'):
+                res['cycle_name'] = "Cycle %s" % next_number
+        return res
+
     @api.depends('cycle_number')
     def _compute_cycle_mnemonic(self):
         for rec in self:
@@ -193,9 +209,11 @@ class G2PEnrollmentCycle(models.Model):
     def action_open_create_wizard(self):
         ctx = dict(self.env.context)
         if not ctx.get("default_program_id"):
-            program_id = ctx.get("active_program_id") or ctx.get("program_id")
-            if program_id:
-                ctx["default_program_id"] = program_id
+            # When called from O2M control button inside a program form
+            if self and self[0].program_id:
+                ctx["default_program_id"] = self[0].program_id.id
+            elif ctx.get("active_model") == "g2p.program.definition" and ctx.get("active_id"):
+                ctx["default_program_id"] = ctx["active_id"]
         return {
             "type": "ir.actions.act_window",
             "name": "New Enrolment Cycle",

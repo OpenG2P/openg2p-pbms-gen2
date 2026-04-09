@@ -48,12 +48,15 @@ g2p_bgtask_summary_wizard_write,Write BG Task Summary wizard,g2p_pbms.model_g2p_
 
 g2p_api_summary_line_read,Read API Summary Line,g2p_pbms.model_g2p_api_summary_line,group_program_viewer,1,0,0,0
 g2p_api_summary_line_write,Write API Summary Line,g2p_pbms.model_g2p_api_summary_line,group_program_editor,1,1,1,1
+g2p_api_summary_line_read_disbursement_approver,Read API Summary Line Disbursement Approver,g2p_pbms.model_g2p_api_summary_line,group_disbursement_approver,1,0,0,0
 
 g2p_api_disbursement_envelope_line_read,Read API Disbursement Envelope Line,g2p_pbms.model_g2p_api_disbursement_envelope_line,group_program_viewer,1,0,0,0
 g2p_api_disbursement_envelope_line_write,Write API Disbursement Envelope Line,g2p_pbms.model_g2p_api_disbursement_envelope_line,group_program_editor,1,1,1,1
+g2p_api_disbursement_envelope_line_read_disbursement_approver,Read API Disbursement Envelope Line Disbursement Approver,g2p_pbms.model_g2p_api_disbursement_envelope_line,group_disbursement_approver,1,0,0,0
 
 g2p_api_disbursement_batch_line_read,Read API Disbursement Batch Line,g2p_pbms.model_g2p_api_disbursement_batch_line,group_program_viewer,1,0,0,0
 g2p_api_disbursement_batch_line_write,Write API Disbursement Batch Line,g2p_pbms.model_g2p_api_disbursement_batch_line,group_program_editor,1,1,1,1
+g2p_api_disbursement_batch_line_read_disbursement_approver,Read API Disbursement Batch Line Disbursement Approver,g2p_pbms.model_g2p_api_disbursement_batch_line,group_disbursement_approver,1,0,0,0
 
 g2p_entitlement_rule_definition_read,Read Entitlement Rule,g2p_pbms.model_g2p_entitlement_rule_definition,group_program_viewer,1,0,0,0
 g2p_entitlement_rule_definition_write,Write Entitlement Rule,g2p_pbms.model_g2p_entitlement_rule_definition,group_program_editor,1,1,1,1

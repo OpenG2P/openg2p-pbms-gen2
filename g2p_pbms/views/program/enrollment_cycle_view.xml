@@ -5,8 +5,8 @@
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
             <form delete="0" create="context.get('create', False)">
-                <header>
-                    <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh" invisible="not id"/>
+                <header invisible="not id">
+                    <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh"/>
                 </header>
                 <sheet>
                     <!-- hidden helpers -->
@@ -15,9 +15,12 @@
                     <field name="can_create_list" invisible="1"/>
                     <field name="current_list_id" invisible="1"/>
 
-                    <!-- only show on new record to set program -->
+                    <!-- Creation fields: shown only on new record -->
                     <group invisible="id">
-                        <field name="program_id"/>
+                        <field name="program_id" readonly="1"/>
+                        <field name="cycle_name"/>
+                        <field name="cycle_number" readonly="1"/>
+                        <field name="creation_date" readonly="1"/>
                     </group>
 
                     <!-- Summary info from latest list -->
@@ -112,7 +115,7 @@
         <field name="arch" type="xml">
             <tree default_order="cycle_number desc" delete="false" create="0">
                 <control>
-                    <button string="Create New" type="object" name="action_open_create_wizard" context="{'default_program_id': parent.id}"/>
+                    <create string="Create New"/>
                 </control>
                 <field name="cycle_name" string="Cycle #"/>
                 <field name="creation_date" string="Created On"/>

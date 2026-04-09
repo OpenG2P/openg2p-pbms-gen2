@@ -67,7 +67,7 @@
                     class="btn btn-primary o_list_button_add_enrollment_cycle"
                     title="Create a New Enrolment Cycle"
                     t-on-click="load_enrollment_cycle_wizard">
-                    Create Enrolment Cycle
+                    Create New Cycle
                 </button>
             </t>
         </xpath>

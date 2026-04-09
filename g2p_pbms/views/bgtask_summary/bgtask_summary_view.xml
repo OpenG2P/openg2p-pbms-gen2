@@ -49,9 +49,9 @@
             </div>
             <div class="col-3">
               <group string="Beneficiaries">
-                <field name="eligibility_process_status" string="Resolution Status" readonly="1"/>
+                <field name="eligibility_process_status" string="Resolution Status" widget="badge" readonly="1"/>
                 <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
-                <field name="computation_status" string="Computation Status" readonly="1" invisible="list_stage != 'disbursement'"/>
+                <field name="computation_status" string="Computation Status" widget="badge" readonly="1" invisible="list_stage != 'disbursement'"/>
                 <field name="total_entitlements" string="Total Entitlements" readonly="1" invisible="list_stage != 'disbursement'"/>
               </group>
               <group string="Entitlements" invisible="not entitlement_summary_html">
@@ -60,8 +60,8 @@
             </div>
             <div class="col-3" invisible="list_stage != 'disbursement'">
               <group string="Bridge Status">
-                <field name="envelope_status" string="Envelope Status" readonly="1"/>
-                <field name="disbursement_batch_status" string="Batch Status" readonly="1"/>
+                <field name="envelope_status" string="Envelope Status" widget="badge" readonly="1"/>
+                <field name="disbursement_batch_status" string="Batch Status" widget="badge" readonly="1"/>
                 <field name="bridge_envelope_count" string="# of Envelopes" readonly="1"/>
                 <field name="bridge_batch_count" string="# of Batches" readonly="1"/>
               </group>

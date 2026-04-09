@@ -51,6 +51,22 @@
     <field name="name">Audit Operation</field>
     <field name="category_id" ref="g2p_pbms" />
   </record>
+  <record id="group_enrolment_1" model="res.groups">
+    <field name="name">Enrolment Stage 1</field>
+    <field name="category_id" ref="g2p_pbms" />
+  </record>
+    <record id="group_enrolment_2" model="res.groups">
+    <field name="name">Enrolment Stage 2</field>
+    <field name="category_id" ref="g2p_pbms" />
+  </record>
+  <record id="group_disbursement_1" model="res.groups">
+    <field name="name">Disbursement Stage 1</field>
+    <field name="category_id" ref="g2p_pbms" />
+  </record>
+  <record id="group_disbursement_2" model="res.groups">
+    <field name="name">Disbursement Stage 2</field>
+    <field name="category_id" ref="g2p_pbms" />
+  </record>  
 
   <!-- Define Low Level Groups (LLG) - hidden in UI -->
   <record id="group_abstract_model_viewer" model="res.groups">

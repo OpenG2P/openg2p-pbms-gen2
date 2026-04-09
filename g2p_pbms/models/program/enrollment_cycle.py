@@ -235,13 +235,6 @@ class G2PEnrollmentCycle(models.Model):
                 if not vals.get('cycle_name'):
                     vals['cycle_name'] = "Cycle %s" % vals['cycle_number']
         records = super().create(vals_list)
-        for rec in records:
-            if rec.program_id:
-                self.env["g2p.beneficiary.list"].create({
-                    "enrollment_cycle_id": rec.id,
-                    "list_stage": "enrollment",
-                    "mnemonic": "Version 1",
-                })
         return records
 
     def _check_wip_list(self):
@@ -283,12 +276,22 @@ class G2PEnrollmentCycle(models.Model):
         self.ensure_one()
         if self.current_list_id:
             return self.current_list_id.action_open_summary_wizard()
+        # No list yet — open the summary wizard with Create New Version available
+        wizard = self.env["g2p.bgtask.summary.wizard"].create({
+            "enrollment_cycle_id": self.id,
+            "cycle_name": self.cycle_name,
+            "cycle_created_on": self.creation_date,
+            "cycle_created_by": self.create_uid.id,
+            "list_stage": "enrollment",
+            "program_id": self.program_id.id if self.program_id else False,
+            "target_registry": self.program_id.target_registry if self.program_id else False,
+            "can_create_list": True,
+        })
         return {
-            "type": "ir.actions.act_window",
-            "name": "%s / %s" % (self.program_id.program_mnemonic, self.cycle_name) if self.program_id else self.cycle_mnemonic,
-            "res_model": self._name,
-            "res_id": self.id,
+            "name": "%s / %s" % (self.program_id.program_mnemonic, self.cycle_name) if self.program_id else self.cycle_name,
             "view_mode": "form",
+            "res_model": "g2p.bgtask.summary.wizard",
+            "res_id": wizard.id,
+            "type": "ir.actions.act_window",
             "target": "current",
-            'context': {'create': False, 'enrollment_cycle_form_view': True},
         }

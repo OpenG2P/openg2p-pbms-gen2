@@ -22,6 +22,8 @@ g2p_administrative_area_large_write,Write Administrative Area Large,g2p_pbms.mod
 
 g2p_program_definition_read,Read Programs,g2p_pbms.model_g2p_program_definition,group_program_viewer,1,0,0,0
 g2p_program_definition_write,Write Programs,g2p_pbms.model_g2p_program_definition,group_program_editor,1,1,1,1
+g2p_program_definition_read_enrolment_approver,Read Programs Enrolment Approver,g2p_pbms.model_g2p_program_definition,group_enrolment_approver,1,0,0,0
+g2p_program_definition_read_disbursement_approver,Read Programs Disbursement Approver,g2p_pbms.model_g2p_program_definition,group_disbursement_approver,1,0,0,0
 
 g2p_program_metrics_read,Read Program Metrics,g2p_pbms.model_g2p_program_metrics,group_program_viewer,1,0,0,0
 g2p_program_metrics_write,Write Program Metrics,g2p_pbms.model_g2p_program_metrics,group_program_editor,1,1,1,1
@@ -77,6 +79,8 @@ g2p_disbursement_batch_summary_geo_write,Write G2P Disbursement Batch Summary Ge
 
 g2p_workflow_stage_definition_read,Read Workflow Stage Definition,g2p_pbms.model_g2p_workflow_stage_definition,group_program_viewer,1,0,0,0
 g2p_workflow_stage_definition_write,Write Workflow Stage Definition,g2p_pbms.model_g2p_workflow_stage_definition,group_program_editor,1,1,1,1
+g2p_workflow_stage_definition_read_enrolment_approver,Read Workflow Stage Definition Enrolment Approver,g2p_pbms.model_g2p_workflow_stage_definition,group_enrolment_approver,1,0,0,0
+g2p_workflow_stage_definition_read_disbursement_approver,Read Workflow Stage Definition Disbursement Approver,g2p_pbms.model_g2p_workflow_stage_definition,group_disbursement_approver,1,0,0,0
 
 
 g2p_workflow_stage_history_read,Read Workflow Stage History,g2p_pbms.model_g2p_workflow_stage_history,group_beneficiary_list_viewer,1,0,0,0

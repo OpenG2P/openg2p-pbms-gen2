@@ -3,16 +3,16 @@
     <menuitem id="menu_g2p_root" name="PBMS" sequence="0"/>
 
     <!-- Approval Queue -->
-    <menuitem id="menu_g2p_approval_queue" name="Approvals" parent="menu_g2p_root" action="action_g2p_approvals_client" sequence="1" groups="g2p_pbms.group_enrolment_1,g2p_pbms.group_enrolment_2,g2p_pbms.group_disbursement_1,g2p_pbms.group_disbursement_2,g2p_pbms.group_enrolment_approval,g2p_pbms.group_disbursement_approval,g2p_pbms.group_program_super_administration"/>
+    <menuitem id="menu_g2p_approval_queue" name="Approvals" parent="menu_g2p_root" action="action_g2p_approvals_client" sequence="1" groups="g2p_pbms.group_enrolment_1,g2p_pbms.group_enrolment_2,g2p_pbms.group_disbursement_1,g2p_pbms.group_disbursement_2,g2p_pbms.group_program_super_administration"/>
 
     <!-- Programs (direct) -->
     <menuitem id="menu_g2p_programs" name="Programs" parent="menu_g2p_root" action="action_g2p_programs_config" sequence="2" groups="g2p_pbms.group_program_editor,g2p_pbms.group_program_viewer"/>
 
     <!-- Enrolment Cycles -->
-    <menuitem id="menu_g2p_enrollment_cycles" name="Enrolment Cycles" parent="menu_g2p_root" action="action_g2p_programs_enrolment_cycles" sequence="3"/>
+    <menuitem id="menu_g2p_enrollment_cycles" name="Enrolment Cycles" parent="menu_g2p_root" action="action_g2p_programs_enrolment_cycles" sequence="3" groups="g2p_pbms.group_enrolment_operation,g2p_pbms.group_enrolment_verification,g2p_pbms.group_enrolment_approval,g2p_pbms.group_program_administration,g2p_pbms.group_program_super_administration"/>
 
     <!-- Disbursement Cycles -->
-    <menuitem id="menu_g2p_disbursement_cycles" name="Disbursement Cycles" parent="menu_g2p_root" action="action_g2p_programs_disbursement_cycles" sequence="4"/>
+    <menuitem id="menu_g2p_disbursement_cycles" name="Disbursement Cycles" parent="menu_g2p_root" action="action_g2p_programs_disbursement_cycles" sequence="4" groups="g2p_pbms.group_disbursement_operation,g2p_pbms.group_disbursement_verification,g2p_pbms.group_disbursement_approval,g2p_pbms.group_program_administration,g2p_pbms.group_program_super_administration"/>
 
     <!-- Master Data -->
     <menuitem id="menu_g2p_master_data" name="Master Data" parent="menu_g2p_root" sequence="5"/>

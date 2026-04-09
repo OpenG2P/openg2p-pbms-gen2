@@ -310,10 +310,6 @@
     <field name="implied_ids" eval="[
       ref('group_enrolment_approver'),
       ref('group_beneficiary_list_viewer'),
-      ref('group_enrolment_viewer'),
-      ref('group_program_viewer'),
-      ref('group_benefit_code_viewer'),
-      ref('group_disbursement_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>
@@ -322,10 +318,6 @@
     <field name="implied_ids" eval="[
       ref('group_enrolment_approver'),
       ref('group_beneficiary_list_viewer'),
-      ref('group_enrolment_viewer'),
-      ref('group_program_viewer'),
-      ref('group_benefit_code_viewer'),
-      ref('group_disbursement_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>
@@ -334,11 +326,6 @@
     <field name="implied_ids" eval="[
       ref('group_disbursement_approver'),
       ref('group_beneficiary_list_viewer'),
-      ref('group_disbursement_viewer'),
-      ref('group_priority_rules_viewer'),
-      ref('group_program_viewer'),
-      ref('group_benefit_code_viewer'),
-      ref('group_enrolment_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>
@@ -347,11 +334,6 @@
     <field name="implied_ids" eval="[
       ref('group_disbursement_approver'),
       ref('group_beneficiary_list_viewer'),
-      ref('group_disbursement_viewer'),
-      ref('group_priority_rules_viewer'),
-      ref('group_program_viewer'),
-      ref('group_benefit_code_viewer'),
-      ref('group_enrolment_viewer'),
     ]"/>
     <field name="category_id" ref="g2p_pbms" />
   </record>

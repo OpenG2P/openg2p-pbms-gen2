@@ -152,6 +152,7 @@
                   <field name="cycle_type" column_invisible="1"/>
                   <field name="stage_number"/>
                   <field name="stage_name"/>
+                  <field name="group_id" string="Approval Group"/>
                 </tree>
               </field>
             </page>
@@ -165,6 +166,7 @@
                   <field name="cycle_type" column_invisible="1"/>
                   <field name="stage_number"/>
                   <field name="stage_name"/>
+                  <field name="group_id" string="Approval Group"/>
                 </tree>
               </field>
             </page>

@@ -6,7 +6,6 @@
         <field name="arch" type="xml">
             <form delete="0" create="context.get('create', False)">
                 <header invisible="not id">
-                    <button name="action_refresh_data" type="object" string="Refresh Data" class="btn-secondary" icon="fa-refresh"/>
                     <field name="previous_cycle_ids" invisible="1"/>
                     <field name="selected_previous_cycle_id" widget="many2one"
                            options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"

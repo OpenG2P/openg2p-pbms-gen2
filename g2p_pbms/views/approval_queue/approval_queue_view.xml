@@ -184,7 +184,6 @@ action = action
         <field name="model">g2p.workflow.stage.history</field>
         <field name="arch" type="xml">
             <tree create="0" delete="0" default_order="acted_at desc">
-                <field name="list_id" string="Beneficiary List"/>
                 <field name="list_type" string="Type" widget="badge"
                        decoration-info="list_type == 'ENROLMENT'"
                        decoration-warning="list_type == 'DISBURSEMENT'"/>
@@ -196,6 +195,7 @@ action = action
                        decoration-warning="status == 'PENDING'"/>
                 <field name="enqueued_at" string="Enqueued At"/>
                 <field name="acted_at" string="Acted On"/>
+                <field name="acted_by" string="Acted By"/>
             </tree>
         </field>
     </record>

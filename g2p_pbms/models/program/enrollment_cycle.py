@@ -60,18 +60,6 @@ class G2PEnrollmentCycle(models.Model):
     beneficiary_list_ids = fields.One2many(
         "g2p.beneficiary.list", "enrollment_cycle_id", string="Beneficiary Lists"
     )
-    previous_cycle_ids = fields.Many2many(
-        "g2p.enrollment.cycle",
-        string="Previous Cycles",
-        compute="_compute_previous_cycle_ids",
-        store=False,
-    )
-    selected_previous_cycle_id = fields.Many2one(
-        "g2p.enrollment.cycle",
-        string="Previous Cycles",
-        store=False,
-        domain="[('id', 'in', previous_cycle_ids)]",
-    )
 
     # Date fields made optional (no longer required)
     enrollment_start_date = fields.Date(string="Enrollment Start Date")
@@ -217,26 +205,6 @@ class G2PEnrollmentCycle(models.Model):
             rec.wip_list_id = wip or False
             rec.wip_stage_name = wip.current_stage_name if wip else False
             rec.has_wip_list = bool(wip)
-
-    @api.depends('program_id')
-    def _compute_previous_cycle_ids(self):
-        for rec in self:
-            if rec.program_id and rec.id:
-                siblings = self.search([
-                    ('program_id', '=', rec.program_id.id),
-                    ('id', '!=', rec.id),
-                ])
-                rec.previous_cycle_ids = siblings
-            else:
-                rec.previous_cycle_ids = self.env['g2p.enrollment.cycle']
-
-    def action_go_to_previous_cycle(self):
-        """Navigate to the cycle selected in the previous-cycles dropdown."""
-        self.ensure_one()
-        cycle = self.selected_previous_cycle_id
-        if not cycle:
-            return False
-        return cycle.action_open_view()
 
     def action_open_create_wizard(self):
         ctx = dict(self.env.context)

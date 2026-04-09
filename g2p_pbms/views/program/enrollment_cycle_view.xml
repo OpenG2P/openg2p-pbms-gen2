@@ -5,17 +5,6 @@
         <field name="model">g2p.enrollment.cycle</field>
         <field name="arch" type="xml">
             <form delete="0" create="context.get('create', False)">
-                <header invisible="not id">
-                    <field name="previous_cycle_ids" invisible="1"/>
-                    <field name="selected_previous_cycle_id" widget="many2one"
-                           options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
-                           placeholder="Previous Cycles ▾"
-                           invisible="not previous_cycle_ids"
-                           string=""/>
-                    <button name="action_go_to_previous_cycle" type="object"
-                            string="Go" class="btn-secondary"
-                            invisible="not selected_previous_cycle_id"/>
-                </header>
                 <sheet>
                     <!-- hidden helpers -->
                     <field name="is_readonly" invisible="1"/>

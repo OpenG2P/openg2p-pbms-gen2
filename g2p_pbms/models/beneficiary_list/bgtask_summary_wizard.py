@@ -195,6 +195,17 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         compute="_compute_workflow_data",
         string="Has Previous Versions",
     )
+    previous_enrollment_cycle_ids = fields.Many2many(
+        "g2p.enrollment.cycle",
+        string="Previous Cycles",
+        compute="_compute_previous_enrollment_cycle_ids",
+        store=False,
+    )
+    selected_previous_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        string="Previous Cycles",
+        store=False,
+    )
 
     @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
     def _compute_workflow_data(self):
@@ -212,6 +223,31 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             else:
                 rec.previous_list_ids = BeneficiaryList
             rec.has_previous_versions = bool(rec.previous_list_ids)
+
+    @api.depends("enrollment_cycle_id")
+    def _compute_previous_enrollment_cycle_ids(self):
+        EnrollmentCycle = self.env["g2p.enrollment.cycle"]
+        for rec in self:
+            if rec.enrollment_cycle_id:
+                cycle = EnrollmentCycle.browse(rec.enrollment_cycle_id)
+                if cycle.exists() and cycle.program_id:
+                    siblings = EnrollmentCycle.search([
+                        ("program_id", "=", cycle.program_id.id),
+                        ("id", "!=", rec.enrollment_cycle_id),
+                    ])
+                    rec.previous_enrollment_cycle_ids = siblings
+                else:
+                    rec.previous_enrollment_cycle_ids = EnrollmentCycle
+            else:
+                rec.previous_enrollment_cycle_ids = EnrollmentCycle
+
+    def action_go_to_previous_cycle(self):
+        """Navigate to the enrollment cycle selected in the dropdown."""
+        self.ensure_one()
+        cycle = self.selected_previous_cycle_id
+        if not cycle:
+            return False
+        return cycle.action_open_view()
 
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):

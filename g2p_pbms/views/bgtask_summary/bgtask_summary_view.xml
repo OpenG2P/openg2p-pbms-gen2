@@ -198,9 +198,9 @@
               <field name="priority_rule_ids" nolabel="1" readonly="1"
                      options="{'no_quick_create': True}">
                 <tree create="0" delete="0" edit="0">
-                  <field name="name" string="Rule"/>
-                  <field name="priority" string="Priority"/>
-                  <field name="rule_domain" string="Domain"/>
+                  <field name="mnemonic" string="Rule"/>
+                  <field name="description" string="Description"/>
+                  <field name="pbms_domain" string="Domain"/>
                 </tree>
               </field>
             </page>

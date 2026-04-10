@@ -51,6 +51,7 @@
 }
 
 /* Cycle list: Cycle # column value in bold */
-.o_list_table td[name="cycle_name"] {
+.o_list_table td[name="cycle_name"],
+.o_list_table td[name="cycle_mnemonic"] {
     font-weight: bold !important;
 }

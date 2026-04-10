@@ -279,7 +279,7 @@ class G2PEnrollmentCycle(models.Model):
             raise UserError("Cannot create a new version while a list is in progress.")
         return {
             "type": "ir.actions.act_window",
-            "name": "New Enrolment List",
+            "name": "New Version",
             "res_model": "g2p.beneficiary.list",
             "view_mode": "form",
             "target": "new",

@@ -16,6 +16,8 @@
                     <field name="brief"/>
                 </group>
                 <!-- Hidden fields -->
+                <field name="enrollment_cycle_id" invisible="1"/>
+                <field name="disbursement_cycle_id" invisible="1"/>
                 <field name="mnemonic" invisible="1"/>
                 <field name="list_stage" invisible="1"/>
                 <field name="eligibility_process_status" invisible="1"/>

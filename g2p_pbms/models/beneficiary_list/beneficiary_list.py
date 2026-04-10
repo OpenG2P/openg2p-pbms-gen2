@@ -21,6 +21,7 @@ class G2PBeneficiaryList(models.Model):
     # Cycle detail fields (non-editable) — displayed in Create Version popup
     cycle_name_display = fields.Char(string="Cycle", compute="_compute_cycle_details", store=False)
     cycle_creation_date = fields.Datetime(string="Cycle Creation Date", compute="_compute_cycle_details", store=False)
+    next_list_number = fields.Integer(string="Version #", compute="_compute_next_list_number", store=False)
     disbursement_schedule_date = fields.Date(string="Disbursement Schedule Date")
 
     eligibility_process_status = fields.Selection(
@@ -187,18 +188,35 @@ class G2PBeneficiaryList(models.Model):
             else:
                 rec.brief_truncated = rec.brief or ""
 
-    @api.depends('enrollment_cycle_id.cycle_name', 'disbursement_cycle_id.cycle_name', 'enrollment_cycle_id.creation_date', 'disbursement_cycle_id.creation_date')
+    @api.depends('enrollment_cycle_id', 'disbursement_cycle_id')
     def _compute_cycle_details(self):
         for rec in self:
             if rec.enrollment_cycle_id:
-                rec.cycle_name_display = rec.enrollment_cycle_id.cycle_name
-                rec.cycle_creation_date = rec.enrollment_cycle_id.creation_date
+                rec.cycle_name_display = rec.enrollment_cycle_id.cycle_name or ""
+                rec.cycle_creation_date = rec.enrollment_cycle_id.creation_date or False
             elif rec.disbursement_cycle_id:
-                rec.cycle_name_display = rec.disbursement_cycle_id.cycle_name
-                rec.cycle_creation_date = rec.disbursement_cycle_id.creation_date
+                rec.cycle_name_display = rec.disbursement_cycle_id.cycle_name or ""
+                rec.cycle_creation_date = rec.disbursement_cycle_id.creation_date or False
             else:
                 rec.cycle_name_display = ""
                 rec.cycle_creation_date = False
+
+    @api.depends('enrollment_cycle_id', 'disbursement_cycle_id', 'id')
+    def _compute_next_list_number(self):
+        for rec in self:
+            if rec.id:
+                # If record is already created, use its list_number
+                rec.next_list_number = rec.list_number
+            elif rec.enrollment_cycle_id:
+                # Calculate next version for enrollment
+                count = self.search_count([('enrollment_cycle_id', '=', rec.enrollment_cycle_id.id)])
+                rec.next_list_number = count + 1
+            elif rec.disbursement_cycle_id:
+                # Calculate next version for disbursement
+                count = self.search_count([('disbursement_cycle_id', '=', rec.disbursement_cycle_id.id)])
+                rec.next_list_number = count + 1
+            else:
+                rec.next_list_number = 0
 
     def _compute_disbursement_quantity_display(self):
         for rec in self:

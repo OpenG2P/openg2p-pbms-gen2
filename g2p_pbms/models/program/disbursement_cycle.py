@@ -109,7 +109,7 @@ class G2PDisbursementCycle(models.Model):
         string="Batch Creation Attempts", default=0
     )
     disbursement_schedule_date = fields.Date(
-        string="Disbursement Schedule Date", required=True
+        string="Disbursement Schedule Date", required=True, default=fields.Date.today
     )
     envelope_creation_latest_timestamp = fields.Datetime(
         string="Envelope Creation Latest Timestamp"

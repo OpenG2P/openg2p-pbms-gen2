@@ -16,9 +16,12 @@
                     <field name="current_list_id" invisible="1"/>
                     <field name="target_registry" invisible="1"/>
 
-                    <!-- only show on new record to set program -->
+                    <!-- Creation fields: shown only on new record -->
                     <group invisible="id">
-                        <field name="program_id"/>
+                        <field name="program_id" readonly="1"/>
+                        <field name="cycle_name" readonly="1"/>
+                        <field name="cycle_number" readonly="1"/>
+                        <field name="creation_date" readonly="1"/>
                         <field name="disbursement_schedule_date"/>
                     </group>
 

@@ -196,7 +196,7 @@
             <page string="Disbursement Rules" invisible="list_stage != 'disbursement'">
               <field name="priority_rule_ids" nolabel="1"
                      options="{'no_quick_create': True}"
-                     context="{'default_target_registry': target_registry, 'default_disbursement_cycle_id': disbursement_cycle_id}">
+                     context="{'default_target_registry': target_registry}">
                 <tree>
                   <field name="mnemonic" string="Rule"/>
                   <field name="description" string="Description"/>

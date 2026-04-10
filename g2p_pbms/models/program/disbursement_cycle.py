@@ -370,6 +370,7 @@ class G2PDisbursementCycle(models.Model):
             "context": {
                 "default_disbursement_cycle_id": self.id,
                 "default_list_stage": "disbursement",
+                "default_disbursement_schedule_date": self.disbursement_schedule_date,
             },
         }
 

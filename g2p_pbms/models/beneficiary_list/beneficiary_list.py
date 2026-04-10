@@ -17,6 +17,12 @@ class G2PBeneficiaryList(models.Model):
 
     brief = fields.Text(string="Brief")
     brief_truncated = fields.Char(string="Brief", compute="_compute_brief_truncated", store=False)
+
+    # Cycle detail fields (non-editable) — displayed in Create Version popup
+    cycle_name_display = fields.Char(string="Cycle", compute="_compute_cycle_details", store=False)
+    cycle_creation_date = fields.Datetime(string="Cycle Creation Date", compute="_compute_cycle_details", store=False)
+    disbursement_schedule_date = fields.Date(string="Disbursement Schedule Date")
+
     eligibility_process_status = fields.Selection(
         [
             ("not_applicable", "not applicable"),
@@ -180,6 +186,19 @@ class G2PBeneficiaryList(models.Model):
                 rec.brief_truncated = rec.brief[:50] + "..."
             else:
                 rec.brief_truncated = rec.brief or ""
+
+    @api.depends('enrollment_cycle_id.cycle_name', 'disbursement_cycle_id.cycle_name', 'enrollment_cycle_id.creation_date', 'disbursement_cycle_id.creation_date')
+    def _compute_cycle_details(self):
+        for rec in self:
+            if rec.enrollment_cycle_id:
+                rec.cycle_name_display = rec.enrollment_cycle_id.cycle_name
+                rec.cycle_creation_date = rec.enrollment_cycle_id.creation_date
+            elif rec.disbursement_cycle_id:
+                rec.cycle_name_display = rec.disbursement_cycle_id.cycle_name
+                rec.cycle_creation_date = rec.disbursement_cycle_id.creation_date
+            else:
+                rec.cycle_name_display = ""
+                rec.cycle_creation_date = False
 
     def _compute_disbursement_quantity_display(self):
         for rec in self:

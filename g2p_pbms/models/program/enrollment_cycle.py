@@ -71,6 +71,9 @@ class G2PEnrollmentCycle(models.Model):
     approved_for_enrollment = fields.Boolean(string="Approved for Enrollment", default=False)
 
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
+    is_current_cycle = fields.Boolean(
+        compute='_compute_is_current_cycle', store=False
+    )
 
     # WIP and count computed fields
     wip_list_id = fields.Many2one(
@@ -146,6 +149,7 @@ class G2PEnrollmentCycle(models.Model):
             rec.number_of_lists = len(rec.beneficiary_list_ids)
 
     @api.depends(
+        'is_current_cycle',
         'current_list_id.workflow_approval_status',
         'current_list_id.current_stage_name',
         'current_list_id.number_of_registrants',
@@ -164,7 +168,7 @@ class G2PEnrollmentCycle(models.Model):
                 rec.current_acted_at = False
                 rec.current_enqueued_at = False
                 rec.current_acted_by = False
-                rec.can_create_list = True
+                rec.can_create_list = rec.is_current_cycle
                 rec.cycle_approved = False
                 continue
             rec.current_beneficiary_count = lst.number_of_registrants
@@ -180,7 +184,7 @@ class G2PEnrollmentCycle(models.Model):
                 rec.current_stage_display = history.stage_name if history else False
                 rec.current_enqueued_at = history.enqueued_at if history else False
             approved = lst.workflow_approval_status == 'APPROVED'
-            rec.can_create_list = lst.workflow_approval_status == 'REJECTED'
+            rec.can_create_list = rec.is_current_cycle and lst.workflow_approval_status == 'REJECTED'
             rec.cycle_approved = approved
 
     @api.depends('current_list_id.stage_history_ids')
@@ -192,6 +196,19 @@ class G2PEnrollmentCycle(models.Model):
     def _compute_is_readonly(self):
         for rec in self:
             rec.is_readonly = self.env.context.get('enrollment_cycle_form_view', True)
+
+    @api.depends('program_id', 'cycle_number')
+    def _compute_is_current_cycle(self):
+        for rec in self:
+            if rec.program_id and rec.cycle_number:
+                latest = self.search(
+                    [('program_id', '=', rec.program_id.id)],
+                    order='cycle_number desc',
+                    limit=1,
+                )
+                rec.is_current_cycle = latest.id == rec.id
+            else:
+                rec.is_current_cycle = False
 
     @api.depends("beneficiary_list_ids.workflow_approval_status", "beneficiary_list_ids.current_stage_name")
     def _compute_wip_and_counts(self):

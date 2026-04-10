@@ -71,13 +71,4 @@ class EnrollmentCycleCreateWizard(models.TransientModel):
             "program_id": self.program_id.id,
             "cycle_name": self.cycle_name,
         })
-        return {
-            "type": "ir.actions.act_window",
-            "name": "%s / %s" % (self.program_id.program_mnemonic, cycle.cycle_name),
-            "res_model": "g2p.enrollment.cycle",
-            "res_id": cycle.id,
-            "view_mode": "form",
-            "views": [[False, "form"]],
-            "target": "current",
-            "context": {"create": False, "enrollment_cycle_form_view": True},
-        }
+        return cycle.action_open_view()

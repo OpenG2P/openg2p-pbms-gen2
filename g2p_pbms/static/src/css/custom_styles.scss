@@ -44,3 +44,13 @@
 .summary_tree_view > div > table > tbody > tr {
     border-style : hidden !important;
 }
+
+/* Cycle list: previous (non-current) cycles in brand grey */
+.o_list_table tr.text-muted td {
+    color: #C4C4C4 !important;
+}
+
+/* Cycle list: Cycle # column value in bold */
+.o_list_table td[name="cycle_name"] {
+    font-weight: bold !important;
+}

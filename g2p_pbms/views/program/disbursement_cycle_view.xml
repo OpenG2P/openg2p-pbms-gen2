@@ -117,10 +117,12 @@
         <field name="name">g2p.disbursement.cycle.tree</field>
         <field name="model">g2p.disbursement.cycle</field>
         <field name="arch" type="xml">
-            <tree default_order="cycle_number desc" delete="false">
+            <tree default_order="cycle_number desc" delete="false"
+                  decoration-muted="not is_current_cycle">
                 <control>
                     <create string="Create New Disbursement Cycle"/>
                 </control>
+                <field name="is_current_cycle" column_invisible="1"/>
                 <field name="cycle_name" string="Cycle #"/>
                 <field name="creation_date" string="Created On"/>
                 <field name="number_of_lists" string="# of Versions"/>

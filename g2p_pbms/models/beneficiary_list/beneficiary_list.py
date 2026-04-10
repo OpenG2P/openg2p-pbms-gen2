@@ -201,13 +201,10 @@ class G2PBeneficiaryList(models.Model):
                 rec.cycle_name_display = ""
                 rec.cycle_creation_date = False
 
-    @api.depends('enrollment_cycle_id', 'disbursement_cycle_id', 'id')
+    @api.depends('enrollment_cycle_id', 'disbursement_cycle_id')
     def _compute_next_list_number(self):
         for rec in self:
-            if rec.id:
-                # If record is already created, use its list_number
-                rec.next_list_number = rec.list_number
-            elif rec.enrollment_cycle_id:
+            if rec.enrollment_cycle_id:
                 # Calculate next version for enrollment
                 count = self.search_count([('enrollment_cycle_id', '=', rec.enrollment_cycle_id.id)])
                 rec.next_list_number = count + 1

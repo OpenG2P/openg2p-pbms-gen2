@@ -321,6 +321,23 @@ class G2PDisbursementCycle(models.Model):
         record = super(G2PDisbursementCycle, self).create(vals)
         return record
     
+    def action_open_create_wizard(self):
+        ctx = dict(self.env.context)
+        if not ctx.get("default_program_id"):
+            if self and self[0].program_id:
+                ctx["default_program_id"] = self[0].program_id.id
+            elif ctx.get("active_model") == "g2p.program.definition" and ctx.get("active_id"):
+                ctx["default_program_id"] = ctx["active_id"]
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Disbursement Cycle",
+            "res_model": "g2p.disbursement.cycle.create.wizard",
+            "view_mode": "form",
+            "views": [[False, "form"]],
+            "target": "new",
+            "context": ctx,
+        }
+
     def action_create_new_list(self):
         self.ensure_one()
         if self.cycle_approved:

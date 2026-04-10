@@ -34,6 +34,7 @@
         "views/approval_queue/approval_queue_view.xml",
         "wizards/approval_reason_wizard_view.xml",
         "wizards/enrollment_cycle_create_wizard_view.xml",
+        "wizards/disbursement_cycle_create_wizard_view.xml",
         "views/menu.xml",
     ],
     "assets": {

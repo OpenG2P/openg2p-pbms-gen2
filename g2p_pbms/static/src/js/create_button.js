@@ -142,4 +142,19 @@ patch(ListController.prototype, {
         );
         this.action.doAction(action);
     },
+
+    async load_disbursement_cycle_wizard() {
+        const searchContext = this.env.searchModel && this.env.searchModel.context || {};
+        const additionalContext = {};
+        if (searchContext.default_program_id) {
+            additionalContext.default_program_id = searchContext.default_program_id;
+        }
+        const action = await this.orm.call(
+            "g2p.disbursement.cycle",
+            "action_open_create_wizard",
+            [[]],
+            { context: additionalContext }
+        );
+        this.action.doAction(action);
+    },
 });

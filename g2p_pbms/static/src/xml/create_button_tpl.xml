@@ -69,6 +69,14 @@
                     t-on-click="load_enrollment_cycle_wizard">
                     Create New Cycle
                 </button>
+                <button
+                    t-if="model.root.resModel == 'g2p.disbursement.cycle'"
+                    type="button"
+                    class="btn btn-primary o_list_button_add_disbursement_cycle"
+                    title="Create a New Disbursement Cycle"
+                    t-on-click="load_disbursement_cycle_wizard">
+                    Create New Cycle
+                </button>
             </t>
         </xpath>
     </t>
@@ -84,7 +92,8 @@
                 model.root.resModel != 'g2p.program.definition' and
                 model.root.resModel != 'g2p.administrative.area.large' and
                 model.root.resModel != 'g2p.administrative.area.small' and
-                model.root.resModel != 'g2p.enrollment.cycle'
+                model.root.resModel != 'g2p.enrollment.cycle' and
+                model.root.resModel != 'g2p.disbursement.cycle'
             </attribute>
         </xpath>
     </t>
@@ -98,7 +107,8 @@
                 model.root.resModel != 'g2p.program.definition' and
                 model.root.resModel != 'g2p.administrative.area.large' and
                 model.root.resModel != 'g2p.administrative.area.small' and
-                model.root.resModel != 'g2p.enrollment.cycle'
+                model.root.resModel != 'g2p.enrollment.cycle' and
+                model.root.resModel != 'g2p.disbursement.cycle'
             </attribute>
         </xpath>
         <xpath expr="//button[contains(@class, 'btn-outline-primary o_form_button_create')]" position="attributes">
@@ -110,7 +120,8 @@
                 model.root.resModel != 'g2p.program.definition' and
                 model.root.resModel != 'g2p.administrative.area.large' and
                 model.root.resModel != 'g2p.administrative.area.small' and
-                model.root.resModel != 'g2p.enrollment.cycle'
+                model.root.resModel != 'g2p.enrollment.cycle' and
+                model.root.resModel != 'g2p.disbursement.cycle'
             </attribute>
         </xpath>
     </t>

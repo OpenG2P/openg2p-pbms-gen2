@@ -261,7 +261,7 @@ class G2PProgramDefinition(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': 'New Disbursement Cycle',
-            'res_model': 'g2p.disbursement.cycle',
+            'res_model': 'g2p.disbursement.cycle.create.wizard',
             'view_mode': 'form',
             'views': [[False, 'form']],
             'target': 'new',

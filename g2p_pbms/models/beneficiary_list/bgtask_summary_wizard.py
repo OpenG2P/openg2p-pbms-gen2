@@ -543,6 +543,8 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         excluded_keys = ['id', 'target_registry']
         for wizard in self:
             wizard.summary_line_ids = [(5, 0, 0)]
+            if not wizard.beneficiary_list_uuid:
+                continue
             api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
             sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 

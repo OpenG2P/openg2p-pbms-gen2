@@ -53,7 +53,7 @@
             </div>
             <div class="col-3">
               <group string="Workflow">
-                <field name="current_version" string="Version #" readonly="1"/>
+                <field name="current_version" string="Version #" readonly="1" invisible="current_version == 0"/>
                 <field name="current_stage_display" string="Stage" readonly="1"/>
                 <field name="current_approval_status" string="Status" widget="badge" readonly="1"/>
                 <field name="current_enqueued_at" string="Queued On" readonly="1"/>
@@ -62,9 +62,9 @@
             <div class="col-3">
               <group string="Beneficiaries">
                 <field name="eligibility_process_status" string="Resolution Status" widget="badge" readonly="1"/>
-                <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
+                <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1" invisible="current_beneficiary_count == 0"/>
                 <field name="computation_status" string="Computation Status" widget="badge" readonly="1" invisible="list_stage != 'disbursement'"/>
-                <field name="total_entitlements" string="Total Entitlements" readonly="1" invisible="list_stage != 'disbursement'"/>
+                <field name="total_entitlements" string="Total Entitlements" readonly="1" invisible="list_stage != 'disbursement' or total_entitlements == 0"/>
               </group>
               <group string="Entitlements" invisible="not entitlement_summary_html">
                 <field name="entitlement_summary_html" nolabel="1" readonly="1"/>
@@ -74,8 +74,8 @@
               <group string="Bridge Status">
                 <field name="envelope_status" string="Envelope Status" widget="badge" readonly="1"/>
                 <field name="disbursement_batch_status" string="Batch Status" widget="badge" readonly="1"/>
-                <field name="bridge_envelope_count" string="# of Envelopes" readonly="1"/>
-                <field name="bridge_batch_count" string="# of Batches" readonly="1"/>
+                <field name="bridge_envelope_count" string="# of Envelopes" readonly="1" invisible="bridge_envelope_count == 0"/>
+                <field name="bridge_batch_count" string="# of Batches" readonly="1" invisible="bridge_batch_count == 0"/>
               </group>
             </div>
           </div>

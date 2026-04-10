@@ -51,6 +51,32 @@ class G2PProgramDefinition(models.Model):
         compute="_compute_latest_enrollment_cycle",
         store=False,
     )
+    latest_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        string="Latest Enrollment Cycle Record",
+        compute="_compute_latest_enrollment_cycle_id",
+        store=False,
+    )
+    latest_ec_cycle_name = fields.Char(
+        related="latest_enrollment_cycle_id.cycle_name",
+        string="Current Cycle",
+        store=False,
+    )
+    latest_ec_version = fields.Char(
+        related="latest_enrollment_cycle_id.current_list_id.mnemonic",
+        string="Current Version",
+        store=False,
+    )
+    latest_ec_stage = fields.Char(
+        related="latest_enrollment_cycle_id.current_stage_display",
+        string="Current Stage",
+        store=False,
+    )
+    latest_ec_status = fields.Selection(
+        related="latest_enrollment_cycle_id.current_approval_status",
+        string="Current Status",
+        store=False,
+    )
     disbursement_cycle_ids = fields.One2many(
         "g2p.disbursement.cycle",
         "program_id",
@@ -59,6 +85,32 @@ class G2PProgramDefinition(models.Model):
     latest_disbursement_cycle = fields.Char(
         string="Latest Disbursement Cycle",
         compute="_compute_latest_disbursement_cycle",
+        store=False,
+    )
+    latest_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        string="Latest Disbursement Cycle Record",
+        compute="_compute_latest_disbursement_cycle_id",
+        store=False,
+    )
+    latest_dc_cycle_name = fields.Char(
+        related="latest_disbursement_cycle_id.cycle_name",
+        string="Current Cycle",
+        store=False,
+    )
+    latest_dc_version = fields.Char(
+        related="latest_disbursement_cycle_id.current_list_id.mnemonic",
+        string="Current Version",
+        store=False,
+    )
+    latest_dc_stage = fields.Char(
+        related="latest_disbursement_cycle_id.current_stage_display",
+        string="Current Stage",
+        store=False,
+    )
+    latest_dc_status = fields.Selection(
+        related="latest_disbursement_cycle_id.current_approval_status",
+        string="Current Status",
         store=False,
     )
     workflow_stage_ids = fields.One2many(
@@ -163,11 +215,23 @@ class G2PProgramDefinition(models.Model):
             latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
             rec.latest_enrollment_cycle = latest.cycle_name if latest else ''
 
+    @api.depends('enrollment_cycle_ids.cycle_number')
+    def _compute_latest_enrollment_cycle_id(self):
+        for rec in self:
+            latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_enrollment_cycle_id = latest or False
+
     @api.depends('disbursement_cycle_ids.cycle_number')
     def _compute_latest_disbursement_cycle(self):
         for rec in self:
             latest = rec.disbursement_cycle_ids.sorted('cycle_number', reverse=True)[:1]
             rec.latest_disbursement_cycle = latest.cycle_name if latest else ''
+
+    @api.depends('disbursement_cycle_ids.cycle_number')
+    def _compute_latest_disbursement_cycle_id(self):
+        for rec in self:
+            latest = rec.disbursement_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_disbursement_cycle_id = latest or False
 
     @api.depends('entitlement_id')
     def _compute_entitlement_inline_ids(self):

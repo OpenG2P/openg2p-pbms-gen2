@@ -250,7 +250,13 @@
     <field name="arch" type="xml">
       <tree string="Programs" create="0" delete="0" edit="0">
         <field name="program_mnemonic" string="Program Name"/>
-        <field name="latest_enrollment_cycle" string="Latest Cycle"/>
+        <field name="latest_ec_cycle_name" string="Current Cycle"/>
+        <field name="latest_ec_version" string="Current Version"/>
+        <field name="latest_ec_stage" string="Current Stage"/>
+        <field name="latest_ec_status" string="Current Status" widget="badge"
+               decoration-success="latest_ec_status == 'APPROVED'"
+               decoration-danger="latest_ec_status == 'REJECTED'"
+               decoration-warning="latest_ec_status == 'PENDING'"/>
         <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_cycle_wizard" type="object" string="Create New Cycle" class="oe_link"/>
       </tree>
@@ -269,7 +275,7 @@
                   decoration-muted="not is_current_cycle">
               <field name="is_current_cycle" column_invisible="1"/>
               <field name="cycle_mnemonic" string="Cycle"/>
-              <field name="list_count" string="# Lists"/>
+              <field name="list_count_display" string="# Lists"/>
               <field name="wip_stage_name" string="Current Stage"/>
               <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>
@@ -308,7 +314,13 @@
     <field name="arch" type="xml">
       <tree string="Programs" create="0" delete="0" edit="0">
         <field name="program_mnemonic" string="Program Name"/>
-        <field name="latest_disbursement_cycle" string="Latest Cycle"/>
+        <field name="latest_dc_cycle_name" string="Current Cycle"/>
+        <field name="latest_dc_version" string="Current Version"/>
+        <field name="latest_dc_stage" string="Current Stage"/>
+        <field name="latest_dc_status" string="Current Status" widget="badge"
+               decoration-success="latest_dc_status == 'APPROVED'"
+               decoration-danger="latest_dc_status == 'REJECTED'"
+               decoration-warning="latest_dc_status == 'PENDING'"/>
         <button name="action_view_disbursement_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_disbursement_cycle_wizard" type="object" string="Create New Cycle" class="oe_link"/>
       </tree>
@@ -327,7 +339,7 @@
                   decoration-muted="not is_current_cycle">
               <field name="is_current_cycle" column_invisible="1"/>
               <field name="cycle_mnemonic" string="Cycle"/>
-              <field name="list_count" string="# Lists"/>
+              <field name="list_count_display" string="# Lists"/>
               <field name="wip_stage_name" string="Current Stage"/>
               <button name="action_open_view" type="object" string="View" class="oe_link"/>
             </tree>

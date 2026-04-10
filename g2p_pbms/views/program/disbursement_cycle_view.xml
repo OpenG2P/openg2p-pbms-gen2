@@ -34,7 +34,7 @@
                         </group>
                         <group>
                             <field name="current_beneficiary_count" string="# of Beneficiaries" readonly="1"/>
-                            <field name="number_of_lists" string="# of Versions" readonly="1"/>
+                            <field name="number_of_lists_display" string="# of Versions" readonly="1"/>
                         </group>
                     </group>
 
@@ -125,7 +125,7 @@
                 <field name="is_current_cycle" column_invisible="1"/>
                 <field name="cycle_name" string="Cycle #"/>
                 <field name="creation_date" string="Created On"/>
-                <field name="number_of_lists" string="# of Versions"/>
+                <field name="number_of_lists_display" string="# of Versions"/>
                 <field name="current_stage_display" string="Stage"/>
                 <field name="current_approval_status" string="Status" widget="badge"
                        decoration-success="current_approval_status == 'APPROVED'"

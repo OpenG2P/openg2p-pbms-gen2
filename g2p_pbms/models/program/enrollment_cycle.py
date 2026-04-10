@@ -92,6 +92,11 @@ class G2PEnrollmentCycle(models.Model):
         compute="_compute_wip_and_counts",
         store=False,
     )
+    list_count_display = fields.Char(
+        string="# Lists",
+        compute="_compute_wip_and_counts",
+        store=False,
+    )
     approved_count = fields.Integer(
         string="# Approved",
         compute="_compute_wip_and_counts",
@@ -105,6 +110,11 @@ class G2PEnrollmentCycle(models.Model):
     has_wip_list = fields.Boolean(
         string="Has WIP List",
         compute="_compute_wip_and_counts",
+        store=False,
+    )
+    number_of_lists_display = fields.Char(
+        string="# of Versions",
+        compute="_compute_number_of_lists_display",
         store=False,
     )
 
@@ -210,11 +220,17 @@ class G2PEnrollmentCycle(models.Model):
             else:
                 rec.is_current_cycle = False
 
+    @api.depends('number_of_lists')
+    def _compute_number_of_lists_display(self):
+        for rec in self:
+            rec.number_of_lists_display = str(rec.number_of_lists) if rec.number_of_lists else ''
+
     @api.depends("beneficiary_list_ids.workflow_approval_status", "beneficiary_list_ids.current_stage_name")
     def _compute_wip_and_counts(self):
         for rec in self:
             lists = rec.beneficiary_list_ids
             rec.list_count = len(lists)
+            rec.list_count_display = str(rec.list_count) if rec.list_count else ''
             rec.approved_count = len(lists.filtered(lambda l: l.workflow_approval_status == "APPROVED"))
             pending_lists = lists.filtered(lambda l: l.workflow_approval_status == "PENDING")
             rec.pending_count = len(pending_lists)

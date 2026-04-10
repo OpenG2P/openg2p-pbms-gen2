@@ -53,6 +53,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     beneficiary_list_uuid = fields.Char(string='Beneficiary List ID')
     enrollment_cycle_id = fields.Integer(string='Enrollment Cycle')
     disbursement_cycle_id = fields.Integer(string='Disbursement Cycle')
+    disbursement_cycle_m2o_id = fields.Many2one("g2p.disbursement.cycle", string="Disbursement Cycle Record")
     beneficiary_search = fields.Char(string='Search Beneficiary')
     list_stage = fields.Char(string='List Stage', default="enrollment")
     list_workflow_status = fields.Char(string='List Workflow Status', default="initiated")
@@ -215,12 +216,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         "g2p.disbursement.cycle",
         string="Previous Cycles",
     )
-    # Relay field so we can show the disbursement cycle's priority rules in the wizard
-    priority_rule_ids = fields.Many2many(
+    # Relay field so we can show and edit the disbursement cycle's priority rules in the wizard
+    priority_rule_ids = fields.One2many(
         "g2p.priority.rule.definition",
+        related="disbursement_cycle_m2o_id.priority_rule_ids",
         string="Disbursement Rules",
-        compute="_compute_priority_rule_ids",
-        store=False,
+        readonly=False,
     )
 
     @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
@@ -273,15 +274,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                     rec.previous_disbursement_cycle_ids = DisbursementCycle
             else:
                 rec.previous_disbursement_cycle_ids = DisbursementCycle
-
-    @api.depends("disbursement_cycle_id")
-    def _compute_priority_rule_ids(self):
-        for rec in self:
-            if rec.disbursement_cycle_id:
-                cycle = self.env["g2p.disbursement.cycle"].browse(rec.disbursement_cycle_id)
-                rec.priority_rule_ids = cycle.priority_rule_ids if cycle.exists() else self.env["g2p.priority.rule.definition"]
-            else:
-                rec.priority_rule_ids = self.env["g2p.priority.rule.definition"]
 
     @api.onchange('selected_previous_cycle_id')
     def _onchange_selected_previous_cycle_id(self):
@@ -340,6 +332,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         latest_history = lst.latest_stage_history_id
         pending = lst.pending_stage_ids[:1]
         self.disbursement_cycle_id = cycle.id
+        self.disbursement_cycle_m2o_id = cycle.id
         self.beneficiary_list_id = lst.id
         self.beneficiary_list_uuid = lst.beneficiary_list_id
         self.mnemonic = lst.mnemonic

@@ -194,9 +194,10 @@
 
             <!-- Disbursement Rules: priority rules for the disbursement cycle -->
             <page string="Disbursement Rules" invisible="list_stage != 'disbursement'">
-              <field name="priority_rule_ids" nolabel="1" readonly="1"
-                     options="{'no_quick_create': True}">
-                <tree create="0" delete="0" edit="0">
+              <field name="priority_rule_ids" nolabel="1"
+                     options="{'no_quick_create': True}"
+                     context="{'default_target_registry': target_registry, 'default_disbursement_cycle_id': disbursement_cycle_id}">
+                <tree>
                   <field name="mnemonic" string="Rule"/>
                   <field name="description" string="Description"/>
                   <field name="pbms_domain" string="Domain"/>

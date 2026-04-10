@@ -355,6 +355,7 @@ class G2PDisbursementCycle(models.Model):
         # No list yet — open the summary wizard with Create New Version available
         wizard = self.env["g2p.bgtask.summary.wizard"].create({
             "disbursement_cycle_id": self.id,
+            "disbursement_cycle_m2o_id": self.id,
             "cycle_name": self.cycle_name,
             "cycle_created_on": self.creation_date,
             "cycle_created_by": self.create_uid.id,

@@ -441,6 +441,7 @@ class G2PBeneficiaryList(models.Model):
             "beneficiary_list_uuid": self.beneficiary_list_id,
             "enrollment_cycle_id": self.enrollment_cycle_id.id if self.enrollment_cycle_id else False,
             "disbursement_cycle_id": self.disbursement_cycle_id.id if self.disbursement_cycle_id else False,
+            "disbursement_cycle_m2o_id": self.disbursement_cycle_id.id if self.disbursement_cycle_id else False,
             "list_stage": self.list_stage,
             "list_workflow_status": self.list_workflow_status,
             "enrollment_start_date": self.enrollment_cycle_id.enrollment_start_date if self.enrollment_cycle_id else None,

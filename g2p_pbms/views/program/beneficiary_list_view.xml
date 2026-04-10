@@ -5,7 +5,7 @@
         <field name="model">g2p.beneficiary.list</field>
         <field name="arch" type="xml">
             <form create="0" delete="0">
-                <group>
+                <group string="">
                     <field name="program_id" readonly="1"/>
                     <field name="cycle_name_display" string="Cycle" readonly="1"/>
                     <field name="next_list_number" string="Version #" readonly="1"/>

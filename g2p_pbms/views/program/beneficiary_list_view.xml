@@ -10,8 +10,8 @@
                 </div>
                 <div class="alert alert-info" role="alert" invisible="list_stage != 'disbursement'">
                     <p>A version includes beneficiaries selected using eligibility and disbursement rules, along with their entitlements. It is processed in two background steps: Resolution (list creation) and Computation (entitlement calculation).</p>
-                    <p>Resolution Status indicates if the list is ready.</p>
-                    <p>Computation Status indicates if entitlements are ready (PENDING / COMPLETE).</p>
+                    <p><strong>Resolution Status</strong> indicates if the list is ready.</p>
+                    <p><strong>Computation Status</strong> indicates if entitlements are ready (PENDING / COMPLETE).</p>
                 </div>
                 <group>
                     <field name="program_id" readonly="1"/>

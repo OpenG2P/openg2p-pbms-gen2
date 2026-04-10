@@ -11,6 +11,7 @@
                     <field name="has_wip_list" invisible="1"/>
                     <field name="can_create_list" invisible="1"/>
                     <field name="current_list_id" invisible="1"/>
+                    <field name="number_of_lists" invisible="1"/>
 
                     <!-- Creation fields: shown only on new record -->
                     <group invisible="id">

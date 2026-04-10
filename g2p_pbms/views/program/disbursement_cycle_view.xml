@@ -15,6 +15,7 @@
                     <field name="can_create_list" invisible="1"/>
                     <field name="current_list_id" invisible="1"/>
                     <field name="target_registry" invisible="1"/>
+                    <field name="number_of_lists" invisible="1"/>
 
                     <!-- only show on new record to set program -->
                     <group invisible="id">

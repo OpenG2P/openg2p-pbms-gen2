@@ -25,6 +25,7 @@
                  invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids"/>
           <button name="action_switch_enrollment_cycle" type="object" string="View"
                   class="btn-secondary"
+                  context="{'selected_enrollment_cycle_id': selected_previous_cycle_id}"
                   invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids or not selected_previous_cycle_id"/>
           <!-- Previous Cycles dropdown — disbursement only -->
           <field name="previous_disbursement_cycle_ids" invisible="1"/>
@@ -35,6 +36,7 @@
                  invisible="list_stage != 'disbursement' or not previous_disbursement_cycle_ids"/>
           <button name="action_switch_disbursement_cycle" type="object" string="View"
                   class="btn-secondary"
+                  context="{'selected_disbursement_cycle_id': selected_previous_disbursement_cycle_id}"
                   invisible="list_stage != 'disbursement' or not previous_disbursement_cycle_ids or not selected_previous_disbursement_cycle_id"/>
         </header>
         <sheet>

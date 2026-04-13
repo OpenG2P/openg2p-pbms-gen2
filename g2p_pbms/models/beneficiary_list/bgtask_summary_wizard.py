@@ -275,95 +275,21 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             else:
                 rec.previous_disbursement_cycle_ids = DisbursementCycle
 
-    @api.onchange('selected_previous_cycle_id')
-    def _onchange_selected_previous_cycle_id(self):
-        """Repopulate all wizard fields when a previous enrollment cycle is picked."""
+    def action_switch_enrollment_cycle(self):
+        """Navigate to the selected enrollment cycle by opening a fresh wizard for it."""
+        self.ensure_one()
         cycle = self.selected_previous_cycle_id
-        if not cycle or not cycle.current_list_id:
+        if not cycle:
             return
-        lst = self.env['g2p.beneficiary.list'].browse(cycle.current_list_id.id)
-        if not lst.exists():
-            return
-        latest_history = lst.latest_stage_history_id
-        pending = lst.pending_stage_ids[:1]
-        self.enrollment_cycle_id = cycle.id
-        self.beneficiary_list_id = lst.id
-        self.beneficiary_list_uuid = lst.beneficiary_list_id
-        self.mnemonic = lst.mnemonic
-        self.brief = lst.brief
-        self.program_id = lst.program_id.id
-        self.list_stage = lst.list_stage
-        self.list_workflow_status = lst.list_workflow_status
-        self.enrollment_start_date = cycle.enrollment_start_date
-        self.enrollment_end_date = cycle.enrollment_end_date
-        self.cycle_name = cycle.cycle_name
-        self.cycle_created_on = cycle.creation_date
-        self.cycle_created_by = cycle.create_uid.id
-        self.current_version = lst.list_number
-        self.current_stage_display = (
-            lst.current_stage_name if lst.workflow_approval_status == 'PENDING'
-            else (latest_history.stage_name if latest_history else False)
-        )
-        self.current_approval_status = lst.workflow_approval_status
-        self.current_acted_at = latest_history.acted_at if latest_history else False
-        self.current_acted_by = latest_history.acted_by.id if latest_history else False
-        self.can_create_list = lst.workflow_approval_status == 'REJECTED'
-        self.current_enqueued_at = (
-            pending.enqueued_at if pending
-            else (latest_history.enqueued_at if latest_history else False)
-        )
-        self.current_beneficiary_count = lst.number_of_registrants
-        self.eligibility_process_status = lst.eligibility_process_status
-        self.computation_status = lst.entitlement_process_status or 'not_applicable'
-        self.total_entitlements = lst.number_of_entitlements_processed
-        self.envelope_status = lst.envelope_creation_status
-        self.disbursement_batch_status = lst.disbursement_batch_creation_status
-        self.target_registry = lst.program_id.target_registry
+        return cycle.action_open_view()
 
-    @api.onchange('selected_previous_disbursement_cycle_id')
-    def _onchange_selected_previous_disbursement_cycle_id(self):
-        """Repopulate all wizard fields when a previous disbursement cycle is picked."""
+    def action_switch_disbursement_cycle(self):
+        """Navigate to the selected disbursement cycle by opening a fresh wizard for it."""
+        self.ensure_one()
         cycle = self.selected_previous_disbursement_cycle_id
-        if not cycle or not cycle.current_list_id:
+        if not cycle:
             return
-        lst = self.env['g2p.beneficiary.list'].browse(cycle.current_list_id.id)
-        if not lst.exists():
-            return
-        latest_history = lst.latest_stage_history_id
-        pending = lst.pending_stage_ids[:1]
-        self.disbursement_cycle_id = cycle.id
-        self.disbursement_cycle_m2o_id = cycle.id
-        self.beneficiary_list_id = lst.id
-        self.beneficiary_list_uuid = lst.beneficiary_list_id
-        self.mnemonic = lst.mnemonic
-        self.brief = lst.brief
-        self.program_id = lst.program_id.id
-        self.list_stage = lst.list_stage
-        self.list_workflow_status = lst.list_workflow_status
-        self.disbursement_cycle_mnemonic = cycle.cycle_mnemonic
-        self.cycle_name = cycle.cycle_name
-        self.cycle_created_on = cycle.creation_date
-        self.cycle_created_by = cycle.create_uid.id
-        self.current_version = lst.list_number
-        self.current_stage_display = (
-            lst.current_stage_name if lst.workflow_approval_status == 'PENDING'
-            else (latest_history.stage_name if latest_history else False)
-        )
-        self.current_approval_status = lst.workflow_approval_status
-        self.current_acted_at = latest_history.acted_at if latest_history else False
-        self.current_acted_by = latest_history.acted_by.id if latest_history else False
-        self.can_create_list = lst.workflow_approval_status == 'REJECTED'
-        self.current_enqueued_at = (
-            pending.enqueued_at if pending
-            else (latest_history.enqueued_at if latest_history else False)
-        )
-        self.current_beneficiary_count = lst.number_of_registrants
-        self.eligibility_process_status = lst.eligibility_process_status
-        self.computation_status = lst.entitlement_process_status or 'not_applicable'
-        self.total_entitlements = lst.number_of_entitlements_processed
-        self.envelope_status = lst.envelope_creation_status
-        self.disbursement_batch_status = lst.disbursement_batch_creation_status
-        self.target_registry = lst.program_id.target_registry
+        return cycle.action_open_view()
 
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):

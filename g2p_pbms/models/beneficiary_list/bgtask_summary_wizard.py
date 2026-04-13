@@ -278,22 +278,16 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     def action_switch_enrollment_cycle(self):
         """Navigate to the selected enrollment cycle by opening a fresh wizard for it."""
         self.ensure_one()
-        cycle_id = self.env.context.get('selected_enrollment_cycle_id') or self.selected_previous_cycle_id.id
-        if not cycle_id:
-            return
-        cycle = self.env['g2p.enrollment.cycle'].browse(cycle_id)
-        if not cycle.exists():
+        cycle = self.selected_previous_cycle_id
+        if not cycle:
             return
         return cycle.action_open_view()
 
     def action_switch_disbursement_cycle(self):
         """Navigate to the selected disbursement cycle by opening a fresh wizard for it."""
         self.ensure_one()
-        cycle_id = self.env.context.get('selected_disbursement_cycle_id') or self.selected_previous_disbursement_cycle_id.id
-        if not cycle_id:
-            return
-        cycle = self.env['g2p.disbursement.cycle'].browse(cycle_id)
-        if not cycle.exists():
+        cycle = self.selected_previous_disbursement_cycle_id
+        if not cycle:
             return
         return cycle.action_open_view()
 

@@ -20,28 +20,30 @@
           <field name="prev_enrollment_cycle_id" invisible="1"/>
           <field name="next_enrollment_cycle_id" invisible="1"/>
           <field name="is_viewing_current_enrollment_cycle" invisible="1"/>
-          <button name="action_prev_cycle" type="object" string="&#8592; Prev Cycle"
-                  class="btn-secondary"
-                  invisible="list_stage != 'enrollment' or not prev_enrollment_cycle_id"/>
-          <button name="action_current_cycle" type="object" string="Current Cycle"
-                  class="btn-secondary"
-                  invisible="list_stage != 'enrollment' or is_viewing_current_enrollment_cycle"/>
-          <button name="action_next_cycle" type="object" string="Next Cycle &#8594;"
-                  class="btn-secondary"
-                  invisible="list_stage != 'enrollment' or not next_enrollment_cycle_id"/>
           <!-- Cycle pagination — disbursement -->
           <field name="prev_disbursement_cycle_id" invisible="1"/>
           <field name="next_disbursement_cycle_id" invisible="1"/>
           <field name="is_viewing_current_disbursement_cycle" invisible="1"/>
-          <button name="action_prev_cycle" type="object" string="&#8592; Prev Cycle"
-                  class="btn-secondary"
-                  invisible="list_stage != 'disbursement' or not prev_disbursement_cycle_id"/>
-          <button name="action_current_cycle" type="object" string="Current Cycle"
-                  class="btn-secondary"
-                  invisible="list_stage != 'disbursement' or is_viewing_current_disbursement_cycle"/>
-          <button name="action_next_cycle" type="object" string="Next Cycle &#8594;"
-                  class="btn-secondary"
-                  invisible="list_stage != 'disbursement' or not next_disbursement_cycle_id"/>
+          <div class="ms-auto d-inline-flex gap-2 align-items-center">
+            <button name="action_prev_cycle" type="object" string="&#8592; Prev Cycle"
+                    class="btn-secondary"
+                    invisible="list_stage != 'enrollment' or not prev_enrollment_cycle_id"/>
+            <button name="action_current_cycle" type="object" string="Current Cycle"
+                    class="btn-secondary"
+                    invisible="list_stage != 'enrollment' or is_viewing_current_enrollment_cycle"/>
+            <button name="action_next_cycle" type="object" string="Next Cycle &#8594;"
+                    class="btn-secondary"
+                    invisible="list_stage != 'enrollment' or not next_enrollment_cycle_id"/>
+            <button name="action_prev_cycle" type="object" string="&#8592; Prev Cycle"
+                    class="btn-secondary"
+                    invisible="list_stage != 'disbursement' or not prev_disbursement_cycle_id"/>
+            <button name="action_current_cycle" type="object" string="Current Cycle"
+                    class="btn-secondary"
+                    invisible="list_stage != 'disbursement' or is_viewing_current_disbursement_cycle"/>
+            <button name="action_next_cycle" type="object" string="Next Cycle &#8594;"
+                    class="btn-secondary"
+                    invisible="list_stage != 'disbursement' or not next_disbursement_cycle_id"/>
+          </div>
         </header>
         <sheet>
           <!-- Hidden helper fields -->
@@ -209,8 +211,21 @@
 
             <!-- Disbursement Rules: priority rules for the disbursement cycle -->
             <page string="Disbursement Rules" invisible="list_stage != 'disbursement'">
+              <!-- Readonly view: shown when cycle is not editable (previous/approved cycles) -->
               <field name="priority_rule_ids" nolabel="1"
-                     readonly="not can_create_list"
+                     readonly="1"
+                     invisible="can_create_list"
+                     options="{'no_quick_create': True}"
+                     context="{'default_target_registry': target_registry, 'default_disbursement_cycle_id': disbursement_cycle_m2o_id}">
+                <tree create="0" delete="0">
+                  <field name="mnemonic" string="Rule"/>
+                  <field name="description" string="Description"/>
+                  <field name="pbms_domain" string="Domain"/>
+                </tree>
+              </field>
+              <!-- Editable view: shown when a new list can be created -->
+              <field name="priority_rule_ids" nolabel="1"
+                     invisible="not can_create_list"
                      options="{'no_quick_create': True}"
                      context="{'default_target_registry': target_registry, 'default_disbursement_cycle_id': disbursement_cycle_m2o_id}">
                 <tree>

@@ -77,6 +77,11 @@ class G2PProgramDefinition(models.Model):
         string="Current Status",
         store=False,
     )
+    latest_ec_creation_date = fields.Datetime(
+        related="latest_enrollment_cycle_id.creation_date",
+        string="Cycle Created On",
+        store=False,
+    )
     disbursement_cycle_ids = fields.One2many(
         "g2p.disbursement.cycle",
         "program_id",

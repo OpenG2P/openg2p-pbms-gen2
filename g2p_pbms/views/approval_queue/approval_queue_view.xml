@@ -20,7 +20,7 @@
                 <field name="list_number" string="Current Version"/>
                 <field name="enqueued_at" string="Queued Date"/>
                 <field name="number_of_registrants" string="# of Beneficiaries"/>
-                <button name="action_open_form" type="object" string="View" class="oe_link"/>
+                <button name="action_open_form" type="object" string="Click here to approve/reject" class="btn-primary"/>
             </tree>
         </field>
     </record>

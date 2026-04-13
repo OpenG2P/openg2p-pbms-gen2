@@ -257,6 +257,8 @@
                decoration-success="latest_ec_status == 'APPROVED'"
                decoration-danger="latest_ec_status == 'REJECTED'"
                decoration-warning="latest_ec_status == 'PENDING'"/>
+        <field name="enrollment_frequency" string="Cycle Frequency"/>
+        <field name="latest_ec_creation_date" string="Cycle Created On"/>
         <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_cycle_wizard" type="object" string="Create New Cycle" class="oe_link"
                 invisible="latest_ec_status == 'PENDING'"/>

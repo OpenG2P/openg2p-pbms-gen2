@@ -379,7 +379,7 @@ class G2PDisbursementCycle(models.Model):
             raise UserError("Cannot create a new version while a list is in progress.")
         return {
             "type": "ir.actions.act_window",
-            "name": "New Version",
+            "name": "Create New Disbursement List",
             "res_model": "g2p.beneficiary.list",
             "view_mode": "form",
             "target": "new",

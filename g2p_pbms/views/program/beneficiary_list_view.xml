@@ -5,6 +5,13 @@
         <field name="model">g2p.beneficiary.list</field>
         <field name="arch" type="xml">
             <form create="0" delete="0">
+                <footer>
+                    <button name="action_save_and_open_summary"
+                            type="object"
+                            string="Create"
+                            class="btn-primary"/>
+                    <button string="Discard" class="btn-secondary" special="cancel"/>
+                </footer>
                 <group>
                     <field name="program_id" readonly="1"/>
                     <field name="cycle_name_display" string="Cycle" readonly="1"/>

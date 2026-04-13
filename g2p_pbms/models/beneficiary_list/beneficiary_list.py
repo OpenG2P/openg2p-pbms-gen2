@@ -518,3 +518,9 @@ class G2PBeneficiaryList(models.Model):
                 'default_beneficiary_list_id': self.beneficiary_list_id,
             },
         }
+
+    def action_save_and_open_summary(self):
+        """Called from the create form footer button — record already saved by Odoo.
+        Redirect main window to the fresh summary wizard for this new list."""
+        self.ensure_one()
+        return self.action_open_summary_wizard()

@@ -196,25 +196,35 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         compute="_compute_workflow_data",
         string="Has Previous Versions",
     )
-    previous_enrollment_cycle_ids = fields.Many2many(
-        "g2p.enrollment.cycle",
-        string="Previous Cycles",
-        compute="_compute_previous_enrollment_cycle_ids",
+    # Cycle pagination navigation — disbursement
+    prev_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        compute="_compute_disbursement_cycle_nav",
         store=False,
     )
-    selected_previous_cycle_id = fields.Many2one(
-        "g2p.enrollment.cycle",
-        string="Previous Cycles",
-    )
-    previous_disbursement_cycle_ids = fields.Many2many(
+    next_disbursement_cycle_id = fields.Many2one(
         "g2p.disbursement.cycle",
-        string="Previous Disbursement Cycles",
-        compute="_compute_previous_disbursement_cycle_ids",
+        compute="_compute_disbursement_cycle_nav",
         store=False,
     )
-    selected_previous_disbursement_cycle_id = fields.Many2one(
-        "g2p.disbursement.cycle",
-        string="Previous Cycles",
+    is_viewing_current_disbursement_cycle = fields.Boolean(
+        compute="_compute_disbursement_cycle_nav",
+        store=False,
+    )
+    # Cycle pagination navigation — enrollment
+    prev_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
+    )
+    next_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
+    )
+    is_viewing_current_enrollment_cycle = fields.Boolean(
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
     )
     # Relay field so we can show and edit the disbursement cycle's priority rules in the wizard
     priority_rule_ids = fields.One2many(
@@ -241,71 +251,108 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 rec.previous_list_ids = BeneficiaryList
             rec.has_previous_versions = bool(rec.previous_list_ids)
 
-    @api.depends("enrollment_cycle_id")
-    def _compute_previous_enrollment_cycle_ids(self):
-        EnrollmentCycle = self.env["g2p.enrollment.cycle"]
-        for rec in self:
-            if rec.enrollment_cycle_id:
-                cycle = EnrollmentCycle.browse(rec.enrollment_cycle_id)
-                if cycle.exists() and cycle.program_id:
-                    siblings = EnrollmentCycle.search([
-                        ("program_id", "=", cycle.program_id.id),
-                        ("id", "!=", rec.enrollment_cycle_id),
-                    ])
-                    rec.previous_enrollment_cycle_ids = siblings
-                else:
-                    rec.previous_enrollment_cycle_ids = EnrollmentCycle
-            else:
-                rec.previous_enrollment_cycle_ids = EnrollmentCycle
-
     @api.depends("disbursement_cycle_id")
-    def _compute_previous_disbursement_cycle_ids(self):
+    def _compute_disbursement_cycle_nav(self):
         DisbursementCycle = self.env["g2p.disbursement.cycle"]
         for rec in self:
-            if rec.disbursement_cycle_id:
-                cycle = DisbursementCycle.browse(rec.disbursement_cycle_id)
-                if cycle.exists() and cycle.program_id:
-                    siblings = DisbursementCycle.search([
-                        ("program_id", "=", cycle.program_id.id),
-                        ("id", "!=", rec.disbursement_cycle_id),
-                    ])
-                    rec.previous_disbursement_cycle_ids = siblings
-                else:
-                    rec.previous_disbursement_cycle_ids = DisbursementCycle
-            else:
-                rec.previous_disbursement_cycle_ids = DisbursementCycle
+            if not rec.disbursement_cycle_id:
+                rec.prev_disbursement_cycle_id = False
+                rec.next_disbursement_cycle_id = False
+                rec.is_viewing_current_disbursement_cycle = True
+                continue
+            cycle = DisbursementCycle.browse(rec.disbursement_cycle_id)
+            if not cycle.exists() or not cycle.program_id:
+                rec.prev_disbursement_cycle_id = False
+                rec.next_disbursement_cycle_id = False
+                rec.is_viewing_current_disbursement_cycle = True
+                continue
+            program_id = cycle.program_id.id
+            cycle_number = cycle.cycle_number
+            prev = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", "<", cycle_number),
+            ], order="cycle_number desc", limit=1)
+            nxt = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", ">", cycle_number),
+            ], order="cycle_number asc", limit=1)
+            latest = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+            ], order="cycle_number desc", limit=1)
+            rec.prev_disbursement_cycle_id = prev or False
+            rec.next_disbursement_cycle_id = nxt or False
+            rec.is_viewing_current_disbursement_cycle = latest.id == rec.disbursement_cycle_id
 
-    def action_switch_enrollment_cycle(self):
-        """Navigate to the selected enrollment cycle by opening a fresh wizard for it."""
+    @api.depends("enrollment_cycle_id")
+    def _compute_enrollment_cycle_nav(self):
+        EnrollmentCycle = self.env["g2p.enrollment.cycle"]
+        for rec in self:
+            if not rec.enrollment_cycle_id:
+                rec.prev_enrollment_cycle_id = False
+                rec.next_enrollment_cycle_id = False
+                rec.is_viewing_current_enrollment_cycle = True
+                continue
+            cycle = EnrollmentCycle.browse(rec.enrollment_cycle_id)
+            if not cycle.exists() or not cycle.program_id:
+                rec.prev_enrollment_cycle_id = False
+                rec.next_enrollment_cycle_id = False
+                rec.is_viewing_current_enrollment_cycle = True
+                continue
+            program_id = cycle.program_id.id
+            cycle_number = cycle.cycle_number
+            prev = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", "<", cycle_number),
+            ], order="cycle_number desc", limit=1)
+            nxt = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", ">", cycle_number),
+            ], order="cycle_number asc", limit=1)
+            latest = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+            ], order="cycle_number desc", limit=1)
+            rec.prev_enrollment_cycle_id = prev or False
+            rec.next_enrollment_cycle_id = nxt or False
+            rec.is_viewing_current_enrollment_cycle = latest.id == rec.enrollment_cycle_id
+
+    def action_prev_cycle(self):
         self.ensure_one()
-        cycle = self.selected_previous_cycle_id
+        if self.list_stage == "disbursement":
+            cycle = self.prev_disbursement_cycle_id
+        else:
+            cycle = self.prev_enrollment_cycle_id
         if not cycle:
             return
         return cycle.action_open_view()
 
-    def action_switch_disbursement_cycle(self):
-        """Navigate to the selected disbursement cycle by opening a fresh wizard for it."""
+    def action_next_cycle(self):
         self.ensure_one()
-        cycle = self.selected_previous_disbursement_cycle_id
+        if self.list_stage == "disbursement":
+            cycle = self.next_disbursement_cycle_id
+        else:
+            cycle = self.next_enrollment_cycle_id
         if not cycle:
             return
         return cycle.action_open_view()
 
-    @api.model
-    def action_open_enrollment_cycle_by_id(self, cycle_id):
-        """Open an enrollment cycle by ID directly (called from JS on dropdown selection)."""
-        cycle = self.env["g2p.enrollment.cycle"].browse(cycle_id)
-        if not cycle.exists():
-            return
-        return cycle.action_open_view()
-
-    @api.model
-    def action_open_disbursement_cycle_by_id(self, cycle_id):
-        """Open a disbursement cycle by ID directly (called from JS on dropdown selection)."""
-        cycle = self.env["g2p.disbursement.cycle"].browse(cycle_id)
-        if not cycle.exists():
-            return
-        return cycle.action_open_view()
+    def action_current_cycle(self):
+        self.ensure_one()
+        if self.list_stage == "disbursement" and self.disbursement_cycle_id:
+            cycle = self.env["g2p.disbursement.cycle"].browse(self.disbursement_cycle_id)
+            if cycle.exists() and cycle.program_id:
+                latest = self.env["g2p.disbursement.cycle"].search(
+                    [("program_id", "=", cycle.program_id.id)],
+                    order="cycle_number desc", limit=1
+                )
+                return latest.action_open_view()
+        elif self.enrollment_cycle_id:
+            cycle = self.env["g2p.enrollment.cycle"].browse(self.enrollment_cycle_id)
+            if cycle.exists() and cycle.program_id:
+                latest = self.env["g2p.enrollment.cycle"].search(
+                    [("program_id", "=", cycle.program_id.id)],
+                    order="cycle_number desc", limit=1
+                )
+                return latest.action_open_view()
 
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):

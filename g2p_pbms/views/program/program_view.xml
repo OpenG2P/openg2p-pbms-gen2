@@ -251,7 +251,7 @@
       <tree string="Programs" create="0" delete="0" edit="0">
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_ec_cycle_name" string="Current Cycle"/>
-        <field name="latest_ec_version" string="Current Version"/>
+        <field name="latest_ec_version" string="Current List #"/>
         <field name="latest_ec_stage" string="Current Stage"/>
         <field name="latest_ec_status" string="Current Status" widget="badge"
                decoration-success="latest_ec_status == 'APPROVED'"
@@ -318,7 +318,7 @@
       <tree string="Programs" create="0" delete="0" edit="0">
         <field name="program_mnemonic" string="Program Name"/>
         <field name="latest_dc_cycle_name" string="Current Cycle"/>
-        <field name="latest_dc_version" string="Current Version"/>
+        <field name="latest_dc_version" string="Current List #"/>
         <field name="latest_dc_stage" string="Current Stage"/>
         <field name="latest_dc_status" string="Current Status" widget="badge"
                decoration-success="latest_dc_status == 'APPROVED'"

@@ -17,10 +17,10 @@
                        decoration-info="list_stage == 'enrollment'"
                        decoration-warning="list_stage == 'disbursement'"/>
                 <field name="current_stage_name" string="Current Stage"/>
-                <field name="list_number" string="Current Version"/>
+                <field name="list_number" string="List #"/>
                 <field name="enqueued_at" string="Queued Date"/>
                 <field name="number_of_registrants" string="# of Beneficiaries"/>
-                <button name="action_open_form" type="object" string="Click here to approve/reject" class="btn-primary"/>
+                <button name="action_open_form" type="object" string="View Details" class="btn-primary"/>
             </tree>
         </field>
     </record>
@@ -59,7 +59,7 @@
                                 <field name="cycle_name" string="Cycle #" readonly="1"/>
                                 <field name="cycle_created_on" string="Created On" readonly="1"/>
                                 <field name="cycle_created_by" string="Created By" readonly="1"/>
-                                <field name="list_number" string="Current Version" readonly="1"/>
+                                <field name="list_number" string="List #" readonly="1"/>
                                 <field name="current_stage_name" string="Current Stage" readonly="1"/>
                                 <field name="previous_stage_name" string="Previous Stage" readonly="1" invisible="not previous_stage_name"/>
                                 <field name="enqueued_at" string="Queued On" readonly="1"/>

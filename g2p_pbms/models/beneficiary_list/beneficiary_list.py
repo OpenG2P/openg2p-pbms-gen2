@@ -21,7 +21,7 @@ class G2PBeneficiaryList(models.Model):
     # Cycle detail fields (non-editable) — displayed in Create Version popup
     cycle_name_display = fields.Char(string="Cycle", compute="_compute_cycle_details", store=False)
     cycle_creation_date = fields.Datetime(string="Cycle Creation Date", compute="_compute_cycle_details", store=False)
-    next_list_number = fields.Integer(string="Version #", compute="_compute_next_list_number", store=False)
+    next_list_number = fields.Integer(string="List #", compute="_compute_next_list_number", store=False)
     disbursement_schedule_date = fields.Date(string="Disbursement Schedule Date")
 
     eligibility_process_status = fields.Selection(

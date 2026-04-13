@@ -45,6 +45,7 @@
             "/g2p_pbms/static/src/js/multiplier_widget.js",
             "/g2p_pbms/static/src/js/approval_queue_action.js",
             "/g2p_pbms/static/src/js/stage_history_widget.js",
+            "/g2p_pbms/static/src/js/cycle_switcher_widget.js",
             "/g2p_pbms/static/src/xml/approval_queue_tpl.xml",
             "/g2p_pbms/static/src/xml/stage_history_widget_tpl.xml",
             "/g2p_pbms/static/src/xml/create_button_tpl.xml",

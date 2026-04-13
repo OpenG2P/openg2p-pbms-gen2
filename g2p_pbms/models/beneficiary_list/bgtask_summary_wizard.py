@@ -291,6 +291,22 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             return
         return cycle.action_open_view()
 
+    @api.model
+    def action_open_enrollment_cycle_by_id(self, cycle_id):
+        """Open an enrollment cycle by ID directly (called from JS on dropdown selection)."""
+        cycle = self.env["g2p.enrollment.cycle"].browse(cycle_id)
+        if not cycle.exists():
+            return
+        return cycle.action_open_view()
+
+    @api.model
+    def action_open_disbursement_cycle_by_id(self, cycle_id):
+        """Open a disbursement cycle by ID directly (called from JS on dropdown selection)."""
+        cycle = self.env["g2p.disbursement.cycle"].browse(cycle_id)
+        if not cycle.exists():
+            return
+        return cycle.action_open_view()
+
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):
         for rec in self:

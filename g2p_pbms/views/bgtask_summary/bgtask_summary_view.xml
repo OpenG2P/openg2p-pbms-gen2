@@ -18,24 +18,18 @@
                   class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'disbursement'"/>
           <!-- Previous Cycles dropdown — enrollment only -->
           <field name="previous_enrollment_cycle_ids" invisible="1"/>
-          <field name="selected_previous_cycle_id" widget="many2one"
+          <field name="selected_previous_cycle_id" widget="previous_cycle_many2one"
                  options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
                  placeholder="Previous Cycles ▾"
                  string=""
                  invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids"/>
-          <button name="action_switch_enrollment_cycle" type="object" string="View"
-                  class="btn-secondary"
-                  invisible="list_stage != 'enrollment' or not previous_enrollment_cycle_ids or not selected_previous_cycle_id"/>
           <!-- Previous Cycles dropdown — disbursement only -->
           <field name="previous_disbursement_cycle_ids" invisible="1"/>
-          <field name="selected_previous_disbursement_cycle_id" widget="many2one"
+          <field name="selected_previous_disbursement_cycle_id" widget="previous_cycle_many2one"
                  options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
                  placeholder="Previous Cycles ▾"
                  string=""
                  invisible="list_stage != 'disbursement' or not previous_disbursement_cycle_ids"/>
-          <button name="action_switch_disbursement_cycle" type="object" string="View"
-                  class="btn-secondary"
-                  invisible="list_stage != 'disbursement' or not previous_disbursement_cycle_ids or not selected_previous_disbursement_cycle_id"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->
@@ -47,6 +41,7 @@
           <field name="target_registry" invisible="1"/>
           <field name="can_create_list" invisible="1"/>
           <field name="has_previous_versions" invisible="1"/>
+          <field name="disbursement_cycle_m2o_id" invisible="1"/>
           <field name="show_approval_buttons" invisible="1"/>
           <field name="pending_stage_id" invisible="1"/>
 
@@ -203,8 +198,9 @@
             <!-- Disbursement Rules: priority rules for the disbursement cycle -->
             <page string="Disbursement Rules" invisible="list_stage != 'disbursement'">
               <field name="priority_rule_ids" nolabel="1"
+                     readonly="not can_create_list"
                      options="{'no_quick_create': True}"
-                     context="{'default_target_registry': target_registry}">
+                     context="{'default_target_registry': target_registry, 'default_disbursement_cycle_id': disbursement_cycle_m2o_id}">
                 <tree>
                   <field name="mnemonic" string="Rule"/>
                   <field name="description" string="Description"/>

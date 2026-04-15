@@ -6,33 +6,15 @@
     <field name="arch" type="xml">
       <form string="Cycle Detail" create="0" delete="0">
         <header>
-          <button name="action_wizard_approve" type="object" string="Approve"
-                  class="btn-success" invisible="not show_approval_buttons"
-                  groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
-          <button name="action_wizard_reject" type="object" string="Reject"
-                  class="btn-danger" invisible="not show_approval_buttons"
-                  groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
-          <button name="action_create_new_version" type="object" string="Create New Enrolment List"
-                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'enrollment'"/>
-          <button name="action_create_new_version" type="object" string="Create New Disbursement List"
-                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'disbursement'"/>
-          <!-- Cycle pagination — enrollment -->
+          <!-- Cycle pagination hidden fields -->
           <field name="prev_enrollment_cycle_id" invisible="1"/>
           <field name="next_enrollment_cycle_id" invisible="1"/>
           <field name="is_viewing_current_enrollment_cycle" invisible="1"/>
-          <!-- Cycle pagination — disbursement -->
           <field name="prev_disbursement_cycle_id" invisible="1"/>
           <field name="next_disbursement_cycle_id" invisible="1"/>
           <field name="is_viewing_current_disbursement_cycle" invisible="1"/>
-          <!-- Current Cycle — left side -->
-          <button name="action_current_cycle" type="object" string="Current Cycle"
-                  class="btn-secondary"
-                  invisible="show_approval_buttons or list_stage != 'enrollment' or is_viewing_current_enrollment_cycle"/>
-          <button name="action_current_cycle" type="object" string="Current Cycle"
-                  class="btn-secondary"
-                  invisible="show_approval_buttons or list_stage != 'disbursement' or is_viewing_current_disbursement_cycle"/>
-          <!-- Prev / Next — right side -->
-          <div class="ms-auto d-inline-flex gap-2 align-items-center">
+          <!-- Prev / Next — FIRST in DOM = rightmost in Odoo's row-reverse header -->
+          <div class="d-inline-flex gap-2 align-items-center">
             <button name="action_prev_cycle" type="object" string="&#8592; Prev Cycle"
                     class="btn-secondary"
                     invisible="show_approval_buttons or list_stage != 'enrollment' or not prev_enrollment_cycle_id"/>
@@ -46,6 +28,24 @@
                     class="btn-secondary"
                     invisible="show_approval_buttons or list_stage != 'disbursement' or not next_disbursement_cycle_id"/>
           </div>
+          <!-- Action buttons -->
+          <button name="action_wizard_approve" type="object" string="Approve"
+                  class="btn-success" invisible="not show_approval_buttons"
+                  groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
+          <button name="action_wizard_reject" type="object" string="Reject"
+                  class="btn-danger" invisible="not show_approval_buttons"
+                  groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
+          <!-- Go to Current Cycle — before Create = visually right of Create in row-reverse -->
+          <button name="action_current_cycle" type="object" string="Go to Current Cycle"
+                  class="btn-secondary"
+                  invisible="show_approval_buttons or list_stage != 'enrollment' or is_viewing_current_enrollment_cycle"/>
+          <button name="action_current_cycle" type="object" string="Go to Current Cycle"
+                  class="btn-secondary"
+                  invisible="show_approval_buttons or list_stage != 'disbursement' or is_viewing_current_disbursement_cycle"/>
+          <button name="action_create_new_version" type="object" string="Create New Enrolment List"
+                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'enrollment'"/>
+          <button name="action_create_new_version" type="object" string="Create New Disbursement List"
+                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'disbursement'"/>
         </header>
         <sheet>
           <!-- Hidden helper fields -->

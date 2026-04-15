@@ -879,13 +879,27 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         
         self.approve_for_disbursement()
 
+    def write(self, vals):
+        """Handle priority_rule_ids explicitly to avoid related One2many refresh issues on TransientModel."""
+        rule_commands = vals.pop('priority_rule_ids', None)
+        res = super().write(vals)
+        if rule_commands is not None:
+            for rec in self:
+                if rec.disbursement_cycle_m2o_id:
+                    rec.disbursement_cycle_m2o_id.write({'priority_rule_ids': rule_commands})
+                    rec.disbursement_cycle_m2o_id.invalidate_recordset(['priority_rule_ids'])
+            self.invalidate_recordset(['priority_rule_ids'])
+        return res
+
     def action_refresh_data(self):
-        """Force refresh of data from database"""
+        """Rebuild wizard from source data (simulates go-back + View)."""
         self.ensure_one()
-        # Clear cache to force fresh database reads
-        self._invalidate_cache()
-        # Re-read from database
-        self.invalidate_recordset()
+        if self.beneficiary_list_id:
+            bl = self.env["g2p.beneficiary.list"].browse(self.beneficiary_list_id)
+            if bl.exists():
+                return bl.action_open_summary_wizard()
+        if self.disbursement_cycle_m2o_id:
+            return self.disbursement_cycle_m2o_id.action_open_view()
         return True
 
     def action_create_new_version(self):

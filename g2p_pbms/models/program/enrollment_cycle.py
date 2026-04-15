@@ -283,9 +283,8 @@ class G2PEnrollmentCycle(models.Model):
 
     def action_refresh_data(self):
         self.ensure_one()
-        self._invalidate_cache()
         self.invalidate_recordset()
-        return True
+        return self.action_open_view()
 
     def action_create_new_list(self):
         self.ensure_one()

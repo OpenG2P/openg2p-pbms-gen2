@@ -77,4 +77,13 @@ class DisbursementCycleCreateWizard(models.TransientModel):
             "cycle_name": self.cycle_name,
             "disbursement_schedule_date": self.disbursement_schedule_date,
         })
+        # Copy priority rules from the previous cycle so new cycles inherit them
+        prev_cycle = self.env["g2p.disbursement.cycle"].search(
+            [("program_id", "=", self.program_id.id), ("id", "!=", cycle.id)],
+            order="cycle_number desc",
+            limit=1,
+        )
+        if prev_cycle and prev_cycle.priority_rule_ids:
+            for rule in prev_cycle.priority_rule_ids:
+                rule.copy({"disbursement_cycle_id": cycle.id})
         return cycle.action_open_view()

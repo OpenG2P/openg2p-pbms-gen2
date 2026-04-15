@@ -435,6 +435,21 @@ class G2PBeneficiaryList(models.Model):
             "context": {"create": False, "delete": False},
         }
 
+    def _get_rules_cycle_id(self):
+        """Return the disbursement cycle ID to use for displaying priority rules.
+        For old (non-current) cycles with no rules, fall back to the latest cycle's rules."""
+        dc = self.disbursement_cycle_id
+        if not dc:
+            return False
+        if dc.is_current_cycle or dc.priority_rule_ids:
+            return dc.id
+        latest = self.env["g2p.disbursement.cycle"].search(
+            [("program_id", "=", self.program_id.id)],
+            order="cycle_number desc",
+            limit=1,
+        )
+        return latest.id if latest else dc.id
+
     def action_open_summary_wizard(self):
         if (
             self.list_stage == 'enrollment'
@@ -475,7 +490,7 @@ class G2PBeneficiaryList(models.Model):
             "beneficiary_list_uuid": self.beneficiary_list_id,
             "enrollment_cycle_id": self.enrollment_cycle_id.id if self.enrollment_cycle_id else False,
             "disbursement_cycle_id": self.disbursement_cycle_id.id if self.disbursement_cycle_id else False,
-            "disbursement_cycle_m2o_id": self.disbursement_cycle_id.id if self.disbursement_cycle_id else False,
+            "disbursement_cycle_m2o_id": self._get_rules_cycle_id(),
             "list_stage": self.list_stage,
             "list_workflow_status": self.list_workflow_status,
             "enrollment_start_date": self.enrollment_cycle_id.enrollment_start_date if self.enrollment_cycle_id else None,

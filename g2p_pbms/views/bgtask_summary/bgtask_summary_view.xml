@@ -21,9 +21,9 @@
                   class="btn-danger" invisible="not show_approval_buttons"
                   groups="g2p_pbms.group_enrolment_approver,g2p_pbms.group_disbursement_approver"/>
           <button name="action_create_new_version" type="object" string="Create New Enrolment List"
-                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'enrollment'"/>
+                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'enrollment' or not is_viewing_current_enrollment_cycle"/>
           <button name="action_create_new_version" type="object" string="Create New Disbursement List"
-                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'disbursement'"/>
+                  class="btn-primary" icon="fa-plus" invisible="not can_create_list or list_stage != 'disbursement' or not is_viewing_current_disbursement_cycle"/>
           <button name="action_current_cycle" type="object" string="Go to Current Cycle"
                   class="btn-secondary"
                   invisible="show_approval_buttons or list_stage != 'enrollment' or is_viewing_current_enrollment_cycle"/>

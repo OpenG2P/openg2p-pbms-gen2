@@ -55,3 +55,8 @@
 .o_list_table td[name="cycle_mnemonic"] {
     font-weight: bold !important;
 }
+
+/* Make statusbar buttons fill full width so ms-auto pushes cycle nav to the right */
+.o_form_statusbar .o_statusbar_buttons {
+    flex: 1 1 auto;
+}

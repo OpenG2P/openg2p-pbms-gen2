@@ -1,6 +1,6 @@
 {
     "name": "PBMS",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "summary": "OpenG2P PBMS",
     "description": "OpenG2P PBMS",
     "category": "G2P",

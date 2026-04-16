@@ -47,6 +47,8 @@
         <sheet>
           <!-- Hidden helper fields -->
           <field name="beneficiary_list_id" invisible="1"/>
+          <widget name="web_ribbon" title="History" bg_color="bg-secondary"
+                  invisible="(list_stage == 'enrollment' and is_viewing_current_enrollment_cycle) or (list_stage == 'disbursement' and is_viewing_current_disbursement_cycle)"/>
           <field name="list_stage" invisible="1"/>
           <field name="list_workflow_status" invisible="1"/>
           <field name="show_approve_enrolment_button" invisible="1"/>

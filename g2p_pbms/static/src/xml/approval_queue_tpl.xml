@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates xml:space="preserve">
     <t t-name="g2p_pbms.ApprovalsAction">
-        <div class="o_action">
+        <div class="o_action g2p-approvals-action">
             <div class="o_notebook">
                 <div class="o_notebook_headers">
                     <ul class="nav nav-tabs">

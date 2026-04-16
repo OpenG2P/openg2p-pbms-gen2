@@ -35,6 +35,13 @@ class ApprovalsAction extends Component {
                 kwargs: {},
             });
             this.queueTreeViewId = result ? result[1] : false;
+            const histResult = await this.rpc("/web/dataset/call_kw/ir.model.data/check_object_reference", {
+                model: "ir.model.data",
+                method: "check_object_reference",
+                args: ["g2p_pbms", "view_g2p_approval_history_tree"],
+                kwargs: {},
+            });
+            this.historyTreeViewId = histResult ? histResult[1] : false;
         });
     }
 
@@ -63,6 +70,11 @@ class ApprovalsAction extends Component {
                 ["acted_by", "=", this.user.userId],
                 ["status", "in", ["APPROVED", "REJECTED"]],
             ],
+            viewId: this.historyTreeViewId || false,
+            context: {},
+            noContentHelp: "No approval history.",
+            allowSelectors: false,
+            selectRecord: () => {},
         };
     }
 }

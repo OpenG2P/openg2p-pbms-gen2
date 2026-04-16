@@ -261,7 +261,7 @@
         <field name="latest_ec_creation_date" string="Cycle Created On"/>
         <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_cycle_wizard" type="object" string="Create New Cycle" class="btn-primary"
-                invisible="latest_ec_status == 'PENDING'"/>
+                invisible="latest_enrollment_cycle_id and latest_ec_status not in ('APPROVED', 'REJECTED')"/>
       </tree>
     </field>
   </record>
@@ -326,7 +326,7 @@
                decoration-warning="latest_dc_status == 'PENDING'"/>
         <button name="action_view_disbursement_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_disbursement_cycle_wizard" type="object" string="Create New Cycle" class="btn-primary"
-                invisible="latest_dc_status == 'PENDING'"/>
+                invisible="latest_disbursement_cycle_id and latest_dc_status not in ('APPROVED', 'REJECTED')"/>
       </tree>
     </field>
   </record>

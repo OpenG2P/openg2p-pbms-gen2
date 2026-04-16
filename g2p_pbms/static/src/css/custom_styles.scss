@@ -60,3 +60,23 @@
 .o_form_statusbar .o_statusbar_buttons {
     flex: 1 1 auto;
 }
+
+/* Approvals tabbed action: fill height, scroll, contain list view */
+.g2p-approvals-action {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.g2p-approvals-action .o_notebook {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+.g2p-approvals-action .tab-content {
+    flex: 1 1 0;
+    overflow: auto;
+    min-height: 0;
+}

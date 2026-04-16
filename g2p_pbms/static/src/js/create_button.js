@@ -4,6 +4,8 @@ import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
 import { useState, onWillStart } from "@odoo/owl";
 
+const NO_OPEN_MODELS = ["g2p.enrollment.cycle", "g2p.disbursement.cycle"];
+
 patch(ListController.prototype, {
     setup() {
         super.setup();
@@ -20,6 +22,8 @@ patch(ListController.prototype, {
             canCreateGeography: false,
         });
 
+        this.programConfigViewId = null;
+
         // Load groups before rendering
         onWillStart(async () => {
             this.permissions.canCreateAgency = await this.user.hasGroup("g2p_pbms.group_agency_editor");
@@ -29,6 +33,16 @@ patch(ListController.prototype, {
             this.permissions.canCreateGeography = await this.user.hasGroup("g2p_pbms.group_geography_editor");
 
             this.permissions.canCreateProgram = await this.user.hasGroup("g2p_pbms.group_program_super_administration");
+
+            const configViews = await this.orm.searchRead(
+                "ir.ui.view",
+                [["name", "=", "g2p.programs.config.form"]],
+                ["id"],
+                { limit: 1 }
+            );
+            if (configViews.length) {
+                this.programConfigViewId = configViews[0].id;
+            }
         });
     },
 
@@ -72,9 +86,14 @@ patch(ListController.prototype, {
             type: "ir.actions.act_window",
             res_model: "g2p.program.definition",
             view_mode: "form",
-            views: [[false, "form"]],
+            views: [[this.programConfigViewId || false, "form"]],
             target: "current",
-            context: { create: false, program_form_edit: true, program_form_create: true },
+            context: {
+                create: false,
+                program_form_edit: true,
+                program_form_create: true,
+                program_view_mode: "config",
+            },
         });
     },
 
@@ -90,6 +109,13 @@ patch(ListController.prototype, {
         });
     },
 
+    openRecord(record) {
+        if (NO_OPEN_MODELS.includes(this.props.resModel)) {
+            return;
+        }
+        return super.openRecord(record);
+    },
+
     load_administrative_area_small_wizard() {
         this.action.doAction({
             name: "Administrative Area (Small)",
@@ -100,5 +126,35 @@ patch(ListController.prototype, {
             target: "current",
             context: { create: false, area_form_edit: true },
         });
+    },
+
+    async load_enrollment_cycle_wizard() {
+        const searchContext = this.env.searchModel && this.env.searchModel.context || {};
+        const additionalContext = {};
+        if (searchContext.default_program_id) {
+            additionalContext.default_program_id = searchContext.default_program_id;
+        }
+        const action = await this.orm.call(
+            "g2p.enrollment.cycle",
+            "action_open_create_wizard",
+            [[]],
+            { context: additionalContext }
+        );
+        this.action.doAction(action);
+    },
+
+    async load_disbursement_cycle_wizard() {
+        const searchContext = this.env.searchModel && this.env.searchModel.context || {};
+        const additionalContext = {};
+        if (searchContext.default_program_id) {
+            additionalContext.default_program_id = searchContext.default_program_id;
+        }
+        const action = await this.orm.call(
+            "g2p.disbursement.cycle",
+            "action_open_create_wizard",
+            [[]],
+            { context: additionalContext }
+        );
+        this.action.doAction(action);
     },
 });

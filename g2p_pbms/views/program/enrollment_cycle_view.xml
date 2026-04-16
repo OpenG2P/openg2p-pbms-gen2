@@ -6,7 +6,9 @@
         <field name="arch" type="xml">
             <form delete="0" create="context.get('create', False)">
                 <sheet>
+                    <widget name="web_ribbon" text="History" bg_color="bg-secondary" invisible="is_current_cycle"/>
                     <!-- hidden helpers -->
+                    <field name="is_current_cycle" invisible="1"/>
                     <field name="is_readonly" invisible="1"/>
                     <field name="has_wip_list" invisible="1"/>
                     <field name="can_create_list" invisible="1"/>

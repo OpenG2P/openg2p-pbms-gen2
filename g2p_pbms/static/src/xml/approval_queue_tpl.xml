@@ -2,8 +2,8 @@
 <templates xml:space="preserve">
     <t t-name="g2p_pbms.ApprovalsAction">
         <div class="o_action g2p-approvals-action">
-            <div class="o_notebook">
-                <div class="o_notebook_headers">
+            <div class="g2p-tab-wrapper">
+                <div class="g2p-tab-headers">
                     <ul class="nav nav-tabs">
                         <li class="nav-item">
                             <a t-attf-class="nav-link #{state.activeTab === 'queue' ? 'active' : ''}"
@@ -19,7 +19,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="tab-content">
+                <div class="g2p-tab-content">
                     <t t-if="state.activeTab === 'queue'">
                         <View t-props="queueViewProps" t-key="'queue'"/>
                     </t>

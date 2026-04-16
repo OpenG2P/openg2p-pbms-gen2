@@ -259,6 +259,7 @@
                decoration-warning="latest_ec_status == 'PENDING'"/>
         <field name="enrollment_frequency" string="Cycle Frequency"/>
         <field name="latest_ec_creation_date" string="Cycle Created On"/>
+        <field name="latest_enrollment_cycle_id" column_invisible="1"/>
         <button name="action_view_enrollment_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_cycle_wizard" type="object" string="Create New Cycle" class="btn-primary"
                 invisible="latest_enrollment_cycle_id and latest_ec_status not in ('APPROVED', 'REJECTED')"/>
@@ -324,6 +325,7 @@
                decoration-success="latest_dc_status == 'APPROVED'"
                decoration-danger="latest_dc_status == 'REJECTED'"
                decoration-warning="latest_dc_status == 'PENDING'"/>
+        <field name="latest_disbursement_cycle_id" column_invisible="1"/>
         <button name="action_view_disbursement_cycles" type="object" string="View" class="oe_link"/>
         <button name="action_open_create_disbursement_cycle_wizard" type="object" string="Create New Cycle" class="btn-primary"
                 invisible="latest_disbursement_cycle_id and latest_dc_status not in ('APPROVED', 'REJECTED')"/>

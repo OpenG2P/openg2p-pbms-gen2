@@ -401,7 +401,8 @@ class G2PDisbursementCycle(models.Model):
         if self.current_list_id:
             return self.current_list_id.action_open_summary_wizard()
         # No list yet — open the summary wizard with Create New Version available
-        wizard = self.env["g2p.bgtask.summary.wizard"].create({
+        clean_ctx = {k: v for k, v in self.env.context.items() if not k.startswith("default_")}
+        wizard = self.env["g2p.bgtask.summary.wizard"].with_context(clean_ctx).create({
             "disbursement_cycle_id": self.id,
             "disbursement_cycle_m2o_id": self.id,
             "cycle_name": self.cycle_name,

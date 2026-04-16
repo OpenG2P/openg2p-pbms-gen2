@@ -46,10 +46,94 @@ class G2PProgramDefinition(models.Model):
         "program_id",
         string="Enrollment Cycle",
     )
+    latest_enrollment_cycle = fields.Char(
+        string="Latest Enrollment Cycle",
+        compute="_compute_latest_enrollment_cycle",
+        store=False,
+    )
+    latest_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        string="Latest Enrollment Cycle Record",
+        compute="_compute_latest_enrollment_cycle_id",
+        store=False,
+    )
+    latest_ec_cycle_name = fields.Char(
+        related="latest_enrollment_cycle_id.cycle_name",
+        string="Current Cycle",
+        store=False,
+    )
+    latest_ec_version = fields.Char(
+        related="latest_enrollment_cycle_id.current_list_id.mnemonic",
+        string="Current Version",
+        store=False,
+    )
+    latest_ec_stage = fields.Char(
+        related="latest_enrollment_cycle_id.current_stage_display",
+        string="Current Stage",
+        store=False,
+    )
+    latest_ec_status = fields.Selection(
+        related="latest_enrollment_cycle_id.current_approval_status",
+        string="Current Status",
+        store=False,
+    )
+    latest_ec_creation_date = fields.Datetime(
+        related="latest_enrollment_cycle_id.creation_date",
+        string="Cycle Created On",
+        store=False,
+    )
     disbursement_cycle_ids = fields.One2many(
         "g2p.disbursement.cycle",
         "program_id",
         string="Disbursement Cycle",
+    )
+    latest_disbursement_cycle = fields.Char(
+        string="Latest Disbursement Cycle",
+        compute="_compute_latest_disbursement_cycle",
+        store=False,
+    )
+    latest_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        string="Latest Disbursement Cycle Record",
+        compute="_compute_latest_disbursement_cycle_id",
+        store=False,
+    )
+    latest_dc_cycle_name = fields.Char(
+        related="latest_disbursement_cycle_id.cycle_name",
+        string="Current Cycle",
+        store=False,
+    )
+    latest_dc_version = fields.Char(
+        related="latest_disbursement_cycle_id.current_list_id.mnemonic",
+        string="Current Version",
+        store=False,
+    )
+    latest_dc_stage = fields.Char(
+        related="latest_disbursement_cycle_id.current_stage_display",
+        string="Current Stage",
+        store=False,
+    )
+    latest_dc_status = fields.Selection(
+        related="latest_disbursement_cycle_id.current_approval_status",
+        string="Current Status",
+        store=False,
+    )
+    workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Approval Workflow Stages",
+    )
+    enrollment_workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Enrolment Workflow Stages",
+        domain=[("cycle_type", "=", "ENROLMENT")],
+    )
+    disbursement_workflow_stage_ids = fields.One2many(
+        "g2p.workflow.stage.definition",
+        "program_id",
+        string="Disbursement Workflow Stages",
+        domain=[("cycle_type", "=", "DISBURSEMENT")],
     )
     service_providers_required = fields.Boolean(
         string="Service Providers required",
@@ -130,6 +214,30 @@ class G2PProgramDefinition(models.Model):
         for rec in self:
             rec.show_label_for_beneficiary_list = rec.beneficiary_list == 'labeled'
 
+    @api.depends('enrollment_cycle_ids.cycle_number')
+    def _compute_latest_enrollment_cycle(self):
+        for rec in self:
+            latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_enrollment_cycle = latest.cycle_name if latest else ''
+
+    @api.depends('enrollment_cycle_ids.cycle_number')
+    def _compute_latest_enrollment_cycle_id(self):
+        for rec in self:
+            latest = rec.enrollment_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_enrollment_cycle_id = latest or False
+
+    @api.depends('disbursement_cycle_ids.cycle_number')
+    def _compute_latest_disbursement_cycle(self):
+        for rec in self:
+            latest = rec.disbursement_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_disbursement_cycle = latest.cycle_name if latest else ''
+
+    @api.depends('disbursement_cycle_ids.cycle_number')
+    def _compute_latest_disbursement_cycle_id(self):
+        for rec in self:
+            latest = rec.disbursement_cycle_ids.sorted('cycle_number', reverse=True)[:1]
+            rec.latest_disbursement_cycle_id = latest or False
+
     @api.depends('entitlement_id')
     def _compute_entitlement_inline_ids(self):
         for rec in self:
@@ -137,11 +245,96 @@ class G2PProgramDefinition(models.Model):
 
     def action_open_edit(self):
         self.ensure_one()
+        view_mode = self.env.context.get('program_view_mode', 'config')
+        if view_mode == 'management':
+            view_id = self.env.ref('g2p_pbms.view_g2p_programs_management_form').id
+        else:
+            view_id = self.env.ref('g2p_pbms.view_g2p_programs_config_form').id
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'g2p.program.definition',
             'res_id': self.id,
             'view_mode': 'form',
+            'view_id': view_id,
             'target': 'current',
-            'context':{'create': False, 'program_form_edit':True, 'program_form_create':False},
+            'context': {
+                'create': False,
+                'program_form_edit': True,
+                'program_form_create': False,
+                'program_view_mode': view_mode,
+            },
+        }
+
+    def action_view_enrollment_cycles(self):
+        self.ensure_one()
+        latest_cycle = self.env['g2p.enrollment.cycle'].search(
+            [('program_id', '=', self.id)],
+            order='cycle_number desc',
+            limit=1,
+        )
+        if latest_cycle:
+            return latest_cycle.action_open_view()
+        # No cycles yet — fall back to cycle list so the user can create one
+        return {
+            'type': 'ir.actions.act_window',
+            'name': '%s - Enrolment Cycles' % self.program_mnemonic,
+            'res_model': 'g2p.enrollment.cycle',
+            'view_mode': 'tree,form',
+            'domain': [('program_id', '=', self.id)],
+            'context': {
+                'default_program_id': self.id,
+                'create': True,
+            },
+            'target': 'current',
+        }
+
+    def action_open_create_cycle_wizard(self):
+        """Open the Create New Cycle wizard from the program list, with program pre-filled."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'New Enrolment Cycle',
+            'res_model': 'g2p.enrollment.cycle.create.wizard',
+            'view_mode': 'form',
+            'views': [[False, 'form']],
+            'target': 'new',
+            'context': {
+                'default_program_id': self.id,
+            },
+        }
+
+
+    def action_view_disbursement_cycles(self):
+        self.ensure_one()
+        latest_cycle = self.env['g2p.disbursement.cycle'].search(
+            [('program_id', '=', self.id)],
+            order='cycle_number desc',
+            limit=1,
+        )
+        if latest_cycle:
+            return latest_cycle.action_open_view()
+        # No cycles yet — fall back to cycle list
+        return {
+            'type': 'ir.actions.act_window',
+            'name': '%s - Disbursement Cycles' % self.program_mnemonic,
+            'res_model': 'g2p.disbursement.cycle',
+            'view_mode': 'tree,form',
+            'domain': [('program_id', '=', self.id)],
+            'context': {'default_program_id': self.id},
+            'target': 'current',
+        }
+
+    def action_open_create_disbursement_cycle_wizard(self):
+        """Open the Create New Disbursement Cycle wizard from the program list, with program pre-filled."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'New Disbursement Cycle',
+            'res_model': 'g2p.disbursement.cycle.create.wizard',
+            'view_mode': 'form',
+            'views': [[False, 'form']],
+            'target': 'new',
+            'context': {
+                'default_program_id': self.id,
+            },
         }

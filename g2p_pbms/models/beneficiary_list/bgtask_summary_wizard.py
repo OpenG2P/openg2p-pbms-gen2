@@ -53,6 +53,7 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
     beneficiary_list_uuid = fields.Char(string='Beneficiary List ID')
     enrollment_cycle_id = fields.Integer(string='Enrollment Cycle')
     disbursement_cycle_id = fields.Integer(string='Disbursement Cycle')
+    disbursement_cycle_m2o_id = fields.Many2one("g2p.disbursement.cycle", string="Disbursement Cycle Record")
     beneficiary_search = fields.Char(string='Search Beneficiary')
     list_stage = fields.Char(string='List Stage', default="enrollment")
     list_workflow_status = fields.Char(string='List Workflow Status', default="initiated")
@@ -78,10 +79,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         'g2p.api.summary.line', 'wizard_id', string='Summary Details',
         compute='_compute_summary_lines', store=True
     )
-    summary_general_line_ids = fields.One2many(
-        'g2p.api.summary.line', 'wizard_id', string='General Info',
-        compute='_compute_general'
-    )
     summary_eligibility_line_ids = fields.One2many(
         'g2p.api.summary.line', 'wizard_id', string='Registry Info',
         compute='_compute_eligibility'
@@ -90,7 +87,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         'g2p.api.summary.line', 'wizard_id', string='Registry Info',
         compute='_compute_entitlement'
     )
-    general_title = fields.Char(compute='_compute_general_title', string="Group Title")
     eligibility_group_title = fields.Char(compute='_compute_eligibility_group_title', string="Group Title")
     entitlement_group_title = fields.Char(compute='_compute_entitlement_group_title', string="Group Title")
 
@@ -117,6 +113,246 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         string="Show Approve Disbursement Button",
         compute="_compute_show_approve_disbursement_button",
     )
+
+    # --- Cycle context fields (populated from cycle when opened via action_open_view) ---
+    cycle_name = fields.Char(string="Cycle #")
+    cycle_created_on = fields.Datetime(string="Cycle Created On")
+    cycle_created_by = fields.Many2one("res.users", string="Cycle Created By")
+    current_version = fields.Integer(string="Current Version")
+    current_stage_display = fields.Char(string="Current Stage")
+    current_approval_status = fields.Selection(
+        [("PENDING", "Pending"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")],
+        string="Status",
+    )
+    current_acted_at = fields.Datetime(string="Acted On")
+    current_acted_by = fields.Many2one("res.users", string="Acted By")
+    current_enqueued_at = fields.Datetime(string="Queued On")
+    current_beneficiary_count = fields.Integer(string="# of Beneficiaries")
+    eligibility_process_status = fields.Char(string="Resolution Status")
+    can_create_list = fields.Boolean(string="Can Create Version", default=False)
+
+    # --- Bridge Status fields ---
+    # bridge_dispatch_status = fields.Char(string="Dispatch Status")
+    envelope_status = fields.Char(string="Envelope Status")
+    disbursement_batch_status = fields.Char(string="Batch Status")
+    bridge_envelope_count = fields.Integer(
+        string="# of Envelopes",
+        compute="_compute_bridge_counts",
+    )
+    bridge_batch_count = fields.Integer(
+        string="# of Batches",
+        compute="_compute_bridge_counts",
+    )
+
+    # --- Extra Beneficiary fields ---
+    computation_status = fields.Char(string="Computation Status")
+    total_entitlements = fields.Integer(string="Total Entitlements")
+
+    # --- Approval queue context ---
+    pending_stage_id = fields.Many2one("g2p.workflow.pending.stage", string="Pending Stage")
+    show_approval_buttons = fields.Boolean(
+        string="Show Approval Buttons",
+        compute="_compute_show_approval_buttons",
+    )
+
+    @api.depends("pending_stage_id", "current_approval_status")
+    def _compute_show_approval_buttons(self):
+        for rec in self:
+            rec.show_approval_buttons = bool(
+                rec.pending_stage_id and rec.current_approval_status == "PENDING"
+            )
+
+    @api.depends("disbursement_envelope_line_ids", "disbursement_batch_line_ids")
+    def _compute_bridge_counts(self):
+        for rec in self:
+            rec.bridge_envelope_count = len(rec.disbursement_envelope_line_ids)
+            rec.bridge_batch_count = len(rec.disbursement_batch_line_ids)
+
+    def action_wizard_approve(self):
+        self.ensure_one()
+        if self.pending_stage_id:
+            return self.pending_stage_id.action_approve()
+        raise UserError("No pending stage associated.")
+
+    def action_wizard_reject(self):
+        self.ensure_one()
+        if self.pending_stage_id:
+            return self.pending_stage_id.action_reject()
+        raise UserError("No pending stage associated.")
+
+    # --- Approval History: stage history of the current list ---
+    stage_history_ids = fields.Many2many(
+        "g2p.workflow.stage.history",
+        compute="_compute_workflow_data",
+        string="Approval History",
+    )
+    # --- Previous Versions: other lists in the same cycle ---
+    previous_list_ids = fields.Many2many(
+        "g2p.beneficiary.list",
+        compute="_compute_workflow_data",
+        string="Previous Versions",
+    )
+    has_previous_versions = fields.Boolean(
+        compute="_compute_workflow_data",
+        string="Has Previous Versions",
+    )
+    # Cycle pagination navigation — disbursement
+    prev_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        compute="_compute_disbursement_cycle_nav",
+        store=False,
+    )
+    next_disbursement_cycle_id = fields.Many2one(
+        "g2p.disbursement.cycle",
+        compute="_compute_disbursement_cycle_nav",
+        store=False,
+    )
+    is_viewing_current_disbursement_cycle = fields.Boolean(
+        compute="_compute_disbursement_cycle_nav",
+        store=False,
+    )
+    # Cycle pagination navigation — enrollment
+    prev_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
+    )
+    next_enrollment_cycle_id = fields.Many2one(
+        "g2p.enrollment.cycle",
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
+    )
+    is_viewing_current_enrollment_cycle = fields.Boolean(
+        compute="_compute_enrollment_cycle_nav",
+        store=False,
+    )
+    # Relay field so we can show and edit the disbursement cycle's priority rules in the wizard
+    priority_rule_ids = fields.One2many(
+        "g2p.priority.rule.definition",
+        related="disbursement_cycle_m2o_id.priority_rule_ids",
+        string="Disbursement Rules",
+        readonly=False,
+    )
+
+    @api.depends("beneficiary_list_id", "enrollment_cycle_id", "disbursement_cycle_id")
+    def _compute_workflow_data(self):
+        BeneficiaryList = self.env["g2p.beneficiary.list"]
+        for rec in self:
+            lst = BeneficiaryList.browse(rec.beneficiary_list_id) if rec.beneficiary_list_id else BeneficiaryList
+            rec.stage_history_ids = lst.stage_history_ids if lst.exists() else self.env["g2p.workflow.stage.history"]
+            # Previous lists: all lists in the cycle except current
+            if rec.enrollment_cycle_id:
+                cycle = self.env["g2p.enrollment.cycle"].browse(rec.enrollment_cycle_id)
+                rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.beneficiary_list_id)
+            elif rec.disbursement_cycle_id:
+                cycle = self.env["g2p.disbursement.cycle"].browse(rec.disbursement_cycle_id)
+                rec.previous_list_ids = cycle.beneficiary_list_ids.filtered(lambda l: l.id != rec.beneficiary_list_id)
+            else:
+                rec.previous_list_ids = BeneficiaryList
+            rec.has_previous_versions = bool(rec.previous_list_ids)
+
+    @api.depends("disbursement_cycle_id")
+    def _compute_disbursement_cycle_nav(self):
+        DisbursementCycle = self.env["g2p.disbursement.cycle"]
+        for rec in self:
+            if not rec.disbursement_cycle_id:
+                rec.prev_disbursement_cycle_id = False
+                rec.next_disbursement_cycle_id = False
+                rec.is_viewing_current_disbursement_cycle = True
+                continue
+            cycle = DisbursementCycle.browse(rec.disbursement_cycle_id)
+            if not cycle.exists() or not cycle.program_id:
+                rec.prev_disbursement_cycle_id = False
+                rec.next_disbursement_cycle_id = False
+                rec.is_viewing_current_disbursement_cycle = True
+                continue
+            program_id = cycle.program_id.id
+            cycle_number = cycle.cycle_number
+            prev = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", "<", cycle_number),
+            ], order="cycle_number desc", limit=1)
+            nxt = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", ">", cycle_number),
+            ], order="cycle_number asc", limit=1)
+            latest = DisbursementCycle.search([
+                ("program_id", "=", program_id),
+            ], order="cycle_number desc", limit=1)
+            rec.prev_disbursement_cycle_id = prev or False
+            rec.next_disbursement_cycle_id = nxt or False
+            rec.is_viewing_current_disbursement_cycle = latest.id == rec.disbursement_cycle_id
+
+    @api.depends("enrollment_cycle_id")
+    def _compute_enrollment_cycle_nav(self):
+        EnrollmentCycle = self.env["g2p.enrollment.cycle"]
+        for rec in self:
+            if not rec.enrollment_cycle_id:
+                rec.prev_enrollment_cycle_id = False
+                rec.next_enrollment_cycle_id = False
+                rec.is_viewing_current_enrollment_cycle = True
+                continue
+            cycle = EnrollmentCycle.browse(rec.enrollment_cycle_id)
+            if not cycle.exists() or not cycle.program_id:
+                rec.prev_enrollment_cycle_id = False
+                rec.next_enrollment_cycle_id = False
+                rec.is_viewing_current_enrollment_cycle = True
+                continue
+            program_id = cycle.program_id.id
+            cycle_number = cycle.cycle_number
+            prev = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", "<", cycle_number),
+            ], order="cycle_number desc", limit=1)
+            nxt = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+                ("cycle_number", ">", cycle_number),
+            ], order="cycle_number asc", limit=1)
+            latest = EnrollmentCycle.search([
+                ("program_id", "=", program_id),
+            ], order="cycle_number desc", limit=1)
+            rec.prev_enrollment_cycle_id = prev or False
+            rec.next_enrollment_cycle_id = nxt or False
+            rec.is_viewing_current_enrollment_cycle = latest.id == rec.enrollment_cycle_id
+
+    def action_prev_cycle(self):
+        self.ensure_one()
+        if self.list_stage == "disbursement":
+            cycle = self.prev_disbursement_cycle_id
+        else:
+            cycle = self.prev_enrollment_cycle_id
+        if not cycle:
+            return
+        return cycle.action_open_view()
+
+    def action_next_cycle(self):
+        self.ensure_one()
+        if self.list_stage == "disbursement":
+            cycle = self.next_disbursement_cycle_id
+        else:
+            cycle = self.next_enrollment_cycle_id
+        if not cycle:
+            return
+        return cycle.action_open_view()
+
+    def action_current_cycle(self):
+        self.ensure_one()
+        if self.list_stage == "disbursement" and self.disbursement_cycle_id:
+            cycle = self.env["g2p.disbursement.cycle"].browse(self.disbursement_cycle_id)
+            if cycle.exists() and cycle.program_id:
+                latest = self.env["g2p.disbursement.cycle"].search(
+                    [("program_id", "=", cycle.program_id.id)],
+                    order="cycle_number desc", limit=1
+                )
+                return latest.action_open_view()
+        elif self.enrollment_cycle_id:
+            cycle = self.env["g2p.enrollment.cycle"].browse(self.enrollment_cycle_id)
+            if cycle.exists() and cycle.program_id:
+                latest = self.env["g2p.enrollment.cycle"].search(
+                    [("program_id", "=", cycle.program_id.id)],
+                    order="cycle_number desc", limit=1
+                )
+                return latest.action_open_view()
 
     @api.depends('program_id', 'verification_ids')
     def _compute_show_approve_enrolment_button(self):
@@ -147,11 +383,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
                 if verification_count >= required_reviews:
                     show_button = True
             rec.show_approve_disbursement_button = show_button
-
-    @api.depends('target_registry')
-    def _compute_general_title(self):
-        for rec in self:
-            rec.general_title = 'General Statistics for %s' % rec.target_registry.capitalize()
 
     @api.depends('target_registry')
     def _compute_eligibility_group_title(self):
@@ -294,6 +525,8 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         excluded_keys = ['id', 'target_registry']
         for wizard in self:
             wizard.summary_line_ids = [(5, 0, 0)]
+            if not wizard.beneficiary_list_uuid:
+                continue
             api_url = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.staff_portal_api_url')
             sender_id = self.env['ir.config_parameter'].sudo().get_param('g2p_pbms.keymanager_sign_application_id')
 
@@ -317,12 +550,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             )
             payload = payload.model_dump(mode="json")
 
-            jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
-            headers = {
-                "content-type": "application/json",
-                "Signature": jwt_token
-            }
             try:
+                jwt_token = self.env['keymanager.provider'].jwt_sign_keymanager(json.dumps(payload, indent=None, separators=(",", ":"), sort_keys=True))
+                headers = {
+                    "content-type": "application/json",
+                    "Signature": jwt_token
+                }
                 response = requests.post(endpoint, json=payload, headers=headers, timeout=10)
                 response.raise_for_status()
                 api_response = response.json()
@@ -334,7 +567,12 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             lines = []
             response_body = api_response.get('response_body', {})
             response_payload = response_body.get('response_payload', {})
-            summary = response_payload.get('summary', {})
+            summary = response_payload.get('summary')
+
+            # If summary is None or not a dict, skip processing
+            if not summary or not isinstance(summary, dict):
+                _logger.warning("Summary data is missing or invalid in API response")
+                return
 
             # Prepare benefit_code_id to mnemonic mapping
             benefit_code_obj = self.env['g2p.benefit.codes'].sudo()
@@ -514,13 +752,6 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             wizard.disbursement_batch_line_ids = lines
 
     @api.depends('summary_line_ids')
-    def _compute_general(self):
-        for wizard in self:
-            wizard.summary_general_line_ids = wizard.summary_line_ids.filtered(
-                lambda r: r.summary_type == 'general'
-            )
-
-    @api.depends('summary_line_ids')
     def _compute_eligibility(self):
         for wizard in self:
             wizard.summary_eligibility_line_ids = wizard.summary_line_ids.filtered(
@@ -533,6 +764,68 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
             wizard.summary_entitlement_line_ids = wizard.summary_line_ids.filtered(
                 lambda r: r.summary_type == 'entitlement'
             )
+
+    @api.depends('beneficiary_list_id')
+    def _compute_entitlement_summary_html(self):
+        for wizard in self:
+            _logger.info("=== Entitlement HTML Debug ===")
+            _logger.info("beneficiary_list_id: %s", wizard.beneficiary_list_id)
+
+            if not wizard.beneficiary_list_id:
+                wizard.entitlement_summary_html = False
+                _logger.info("No beneficiary_list_id")
+                continue
+
+            # Get the beneficiary list record
+            list_rec = self.env["g2p.beneficiary.list"].browse(wizard.beneficiary_list_id)
+            _logger.info("list_rec exists: %s", list_rec.exists())
+            _logger.info("disbursement_quantity: %s", list_rec.disbursement_quantity if list_rec.exists() else 'N/A')
+            _logger.info("list_stage: %s", wizard.list_stage)
+            _logger.info("entitlement_process_status: %s", list_rec.entitlement_process_status if list_rec.exists() else 'N/A')
+
+            if not list_rec.exists() or not list_rec.disbursement_quantity:
+                wizard.entitlement_summary_html = False
+                _logger.info("No disbursement_quantity data")
+                continue
+
+            try:
+                data = json.loads(list_rec.disbursement_quantity)
+                _logger.info("Parsed data: %s (type: %s)", data, type(data).__name__)
+                items = []
+
+                if isinstance(data, list):
+                    for item in data:
+                        code = item.get('benefit_code') or item.get('benefit_mnemonic') or ''
+                        qty = item.get('quantity') or item.get('total_disbursement_quantity') or ''
+                        unit = item.get('unit') or item.get('measurement_unit') or ''
+                        if code:
+                            items.append("<li>%s: %s %s</li>" % (code, qty, unit))
+                elif isinstance(data, dict):
+                    for code, details in data.items():
+                        if isinstance(details, dict):
+                            qty = details.get('quantity') or details.get('total_disbursement_quantity') or ''
+                            unit = details.get('unit') or details.get('measurement_unit') or ''
+                        else:
+                            qty = details
+                            unit = ''
+                        items.append("<li>%s: %s %s</li>" % (code, qty, unit))
+
+                if items:
+                    html = "<ul style='margin:0;padding-left:18px;'>%s</ul>" % "".join(items)
+                    wizard.entitlement_summary_html = html
+                    _logger.info("Generated HTML: %s", html)
+                else:
+                    wizard.entitlement_summary_html = False
+                    _logger.info("No items parsed from data")
+            except Exception as e:
+                _logger.warning("Failed to parse disbursement_quantity: %s", e)
+                wizard.entitlement_summary_html = False
+
+    entitlement_summary_html = fields.Html(
+        string="Entitlements",
+        compute="_compute_entitlement_summary_html",
+        sanitize=False,
+    )
 
     @api.depends('beneficiary_list_id')
     def _compute_verification_ids(self):
@@ -586,14 +879,40 @@ class G2PBGTaskSummaryWizard(models.TransientModel):
         
         self.approve_for_disbursement()
 
+    def write(self, vals):
+        """Handle priority_rule_ids explicitly to avoid related One2many refresh issues on TransientModel."""
+        rule_commands = vals.pop('priority_rule_ids', None)
+        res = super().write(vals)
+        if rule_commands is not None:
+            for rec in self:
+                if rec.disbursement_cycle_m2o_id:
+                    rec.disbursement_cycle_m2o_id.write({'priority_rule_ids': rule_commands})
+                    rec.disbursement_cycle_m2o_id.invalidate_recordset(['priority_rule_ids'])
+            self.invalidate_recordset(['priority_rule_ids'])
+        return res
+
     def action_refresh_data(self):
-        """Force refresh of data from database"""
+        """Rebuild wizard from source data (simulates go-back + View)."""
         self.ensure_one()
-        # Clear cache to force fresh database reads
-        self._invalidate_cache()
-        # Re-read from database
-        self.invalidate_recordset()
+        if self.beneficiary_list_id:
+            bl = self.env["g2p.beneficiary.list"].browse(self.beneficiary_list_id)
+            if bl.exists():
+                return bl.action_open_summary_wizard()
+        if self.disbursement_cycle_m2o_id:
+            return self.disbursement_cycle_m2o_id.action_open_view()
         return True
+
+    def action_create_new_version(self):
+        """Create a new version/list for the cycle"""
+        self.ensure_one()
+        if self.enrollment_cycle_id:
+            cycle = self.env["g2p.enrollment.cycle"].browse(self.enrollment_cycle_id)
+            return cycle.action_create_new_list()
+        elif self.disbursement_cycle_id:
+            cycle = self.env["g2p.disbursement.cycle"].browse(self.disbursement_cycle_id)
+            return cycle.action_create_new_list()
+        else:
+            raise UserError("No cycle associated with this wizard.")
 
     def action_record_verifications(self):
         allowed_group = 'g2p_pbms.group_beneficiary_list_verifier'

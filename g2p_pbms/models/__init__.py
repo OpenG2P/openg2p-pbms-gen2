@@ -1,4 +1,9 @@
 from .verification import G2PBeneficiaryListVerification
+from .workflow import (
+    G2PWorkflowStageDefinition,
+    G2PWorkflowStageHistory,
+    G2PWorkflowPendingStage,
+)
 from .keymanager import KeymanagerProvider
 from .benefit_codes import (
     G2PBenefitCodes,
@@ -10,6 +15,8 @@ from .priority import G2PPriorityRuleDefinition
 from .program import (
     G2PProgramDefinition,
     G2PDisbursementCycle,
+    G2PEnrollmentCycle,
+    G2PProgramMetrics,
 )
 from .geography import (
     G2PAdministrativeAreaSmall,

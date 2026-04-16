@@ -16,14 +16,7 @@
                 <div class="page" style="border: 1px solid black; padding: 20px;">
                     <p style="margin-bottom: -5px;">Date: <span t-esc="time.strftime('%d %b %Y')" /></p>
                     <p>Place: <strong>localhost</strong></p>
-                    <div style="margin-bottom: 20px;">
-                        <center>
-                            <img
-                                t-att-src="'/g2p_pbms/static/description/icon.png'"
-                                alt="OpenG2P Logo"
-                                style="max-height: 100px;"
-                            />
-                        </center>
+                    <div style="margin-bottom: 20px;">                      
                         <h2>
                             <center><strong>Disbursement Batch Summary</strong></center>
                         </h2>

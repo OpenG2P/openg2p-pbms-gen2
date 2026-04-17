@@ -1,6 +1,6 @@
 {
     "name": "PBMS Program Access",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "summary": "OpenG2P PBMS Program Access",
     "description": "OpenG2P PBMS Program Access",
     "category": "G2P",
